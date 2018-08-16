@@ -6,6 +6,7 @@ use std::io::Read;
 use std::cmp::min;
 use std::fmt::Formatter;
 use std::fmt::Error;
+use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -210,4 +211,26 @@ pub(crate) struct ListFileBody {
     pub bucket_id: String,
     pub start_file_name: String,
     pub max_file_count: usize,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+/// Request body for the [b2_update_bucket](https://www.backblaze.com/b2/docs/b2_update_bucket.html) call
+pub(crate) struct UpdateBucket<'a> {
+    pub account_id: &'a str,
+    pub bucket_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bucket_type: Option<&'a str>,
+    pub lifecycle_rules: Vec<LifecycleRules<'a>>
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+/// sub-struct for UpdateBucket, contains lifecycle rules
+pub struct LifecycleRules<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub days_from_uploading_to_hiding: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub days_from_hiding_to_deleting: Option<u32>,
+    pub file_name_prefix: &'a str,
 }

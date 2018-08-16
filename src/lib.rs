@@ -36,6 +36,8 @@ pub enum B2Error {
     SerdeError(serde_json::Error),
     /// API related errors, eg. invalid requests
     B2Error(B2ApiError),
+    /// An error caused by passing invalid input to one of this library's functions
+    InputError(String),
     /// Errors returned from the engine module
     B2EngineError,
 }

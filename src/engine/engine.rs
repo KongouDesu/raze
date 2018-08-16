@@ -7,6 +7,7 @@ use B2Error;
 use std;
 use std::path::Path;
 use api::files::structs::*;
+use api::buckets::{Bucket,BucketType};
 
 #[derive(Debug, Clone)]
 /// An object-like struct.
@@ -178,6 +179,20 @@ impl Raze {
         };
         misc::list_all_file_names(&self.client, auth, bucket_id, max_file_count)
     }
+
+    /// Updates the type and days until hiding or deleting files
+    ///
+    /// See also: [raw update_bucket](../../api/buckets/fn.update_bucket.html)
+    pub fn update_bucket(&mut self, bucket_id: &str, bucket_type: Option<BucketType>, days_from_hide_to_delete: Option<u32>, days_from_upload_to_hide: Option<u32>) -> Result<Bucket, B2Error> {
+        let auth = match &self.b2auth {
+            &Some(ref a) => a,
+            &None => return Err(B2Error::B2EngineError),
+        };
+        match buckets::update_bucket(&self.client, auth, bucket_id, bucket_type, days_from_hide_to_delete, days_from_upload_to_hide) {
+            Ok(b) => Ok(b),
+            Err(e) => return Err(e),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -247,5 +262,22 @@ mod tests {
         let mut r = engine::Raze::new();
         r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         let list = r.list_buckets().unwrap();
+    }
+
+    #[test]
+    #[allow(unused_variables)]
+    // This will test than update_bucket call can succeed
+    // By default this will call on the first bucket in your account, but the settings are all configured to not changed anything
+    // Still, don't blame me if it changes something you didn't expect :)
+    fn test_update_bucket_engine() {
+        let mut r = engine::Raze::new();
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        let bucko = &r.list_buckets().unwrap()[0].bucket_id;
+        use api::buckets::BucketType;
+        let n = r.update_bucket(&bucko, None, None, None);
+        match n {
+            Ok(n) => (),
+            Err(e) => assert!(false),
+        }
     }
 }
