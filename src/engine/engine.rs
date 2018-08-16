@@ -62,7 +62,7 @@ impl Raze {
     /// Same as [authenticate](fn.authenticate.html), but takes a path to a file containing only the auth string
     ///
     /// See also the [raw authenticate from file](../../api/auth/fn.authenticate_from_file.html)
-    pub fn new_from_auth_file(&mut self, file: &std::path::Path) -> Option<B2Error> {
+    pub fn authenticate_from_file(&mut self, file: &std::path::Path) -> Option<B2Error> {
         let auth = match auth::authenticate_from_file(&self.client, &file) {
             Ok(b2_auth) => b2_auth,
             Err(e) => return Some(e),
@@ -192,7 +192,7 @@ mod tests {
     #[test]
     fn test_auth_from_file() {
         let mut r = engine::Raze::new();
-        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
     }
 
     #[test]
@@ -222,7 +222,7 @@ mod tests {
     #[allow(unused_variables)]
     fn test_upload_and_delete() {
         let mut r = engine::Raze::new();
-        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         r.set_active_bucket(TEST_BUCKET_ID.to_string());
         let n = r.upload_file(&std::path::Path::new("./testfile.txt"), "").unwrap();
         r.delete_file_version(n.file_name, n.file_id);
@@ -233,7 +233,7 @@ mod tests {
     #[allow(unused_variables)]
     fn test_upload_streaming() {
         let mut r = engine::Raze::new();
-        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         r.set_active_bucket(TEST_BUCKET_ID.to_string());
         let n = r.upload_file_streaming(&std::path::Path::new("./testfile.txt"), "").unwrap();
         r.delete_file_version(n.file_name, n.file_id);
@@ -245,7 +245,7 @@ mod tests {
     #[allow(unused_variables)]
     fn test_list_buckets() {
         let mut r = engine::Raze::new();
-        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         let list = r.list_buckets().unwrap();
     }
 }

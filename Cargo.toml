@@ -1,6 +1,6 @@
 [package]
 name = "raze"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Kongou <kongou@shipfu.moe>"]
 description = "A library for accessing and using the BackBlaze B2 API. Includes raw API calls and an easy-to-use struct"
 keywords = ["b2", "api", "backup", "backblaze"]
