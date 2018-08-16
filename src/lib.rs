@@ -77,7 +77,7 @@ fn handle_b2error_kinds(n: &str) -> B2Error {
     };
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 /// An API error, most likely from a bad API call
 ///
 /// Official documentation: [Error Handling](https://www.backblaze.com/b2/docs/calling.html#error_handling)

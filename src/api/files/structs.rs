@@ -6,9 +6,8 @@ use std::io::Read;
 use std::cmp::min;
 use std::fmt::Formatter;
 use std::fmt::Error;
-use std::collections::HashMap;
 
-#[derive(Deserialize, Serialize, Debug, Eq)]
+#[derive(Deserialize, Serialize, Debug, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Contains information about a file stored on the BackBlaze server
 ///
@@ -204,7 +203,7 @@ impl Read for ThrottledHashAtEndOfBody {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Request body used for the [b2_list_file_names](https://www.backblaze.com/b2/docs/b2_list_file_names.html) call
 pub(crate) struct ListFileBody {
@@ -213,7 +212,7 @@ pub(crate) struct ListFileBody {
     pub max_file_count: usize,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Request body for the [b2_update_bucket](https://www.backblaze.com/b2/docs/b2_update_bucket.html) call
 pub(crate) struct UpdateBucket<'a> {
@@ -224,7 +223,7 @@ pub(crate) struct UpdateBucket<'a> {
     pub lifecycle_rules: Vec<LifecycleRules<'a>>
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 /// sub-struct for UpdateBucket, contains lifecycle rules
 pub struct LifecycleRules<'a> {

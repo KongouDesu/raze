@@ -79,12 +79,12 @@ impl Raze {
     /// This function is called by the engine itself when it needs to
     fn authenticate_uploading(&mut self) -> Result<UploadAuth,B2Error> {
         let auth = match &self.b2auth {
-            &Some(ref a) => a,
-            &None => return Err(B2Error::B2EngineError),
+            Some(ref a) => a,
+            None => return Err(B2Error::B2EngineError),
         };
         let bucket = match &self.active_bucket {
-            &Some(ref a) => a,
-            &None => return Err(B2Error::B2EngineError),
+            Some(ref a) => a,
+            None => return Err(B2Error::B2EngineError),
         };
         let up_auth = match misc::get_upload_url(&self.client, &auth, &bucket) {
             Ok(up_auth) => up_auth,
@@ -145,11 +145,11 @@ impl Raze {
     /// See also: [raw delete_file_version](../../api/files/misc/fn.delete_file_version.html)
     pub fn delete_file_version(&mut self, file_name: String, file_id: String) -> Option<B2Error> {
         let auth = match &self.b2auth {
-            &Some(ref a) => a,
-            &None => return Some(B2Error::B2EngineError),
+            Some(ref a) => a,
+            None => return Some(B2Error::B2EngineError),
         };
         match misc::delete_file_version(&self.client, &auth, file_name, file_id) {
-            Err(e) => return Some(e),
+            Err(e) => Some(e),
             _ => None,
         }
     }
@@ -159,12 +159,12 @@ impl Raze {
     /// See also: [raw list_buckets](../../api/buckets/fn.list_buckets.html)
     pub fn list_buckets(&mut self) -> Result<Vec<buckets::Bucket>,B2Error> {
         let auth = match &self.b2auth {
-            &Some(ref a) => a,
-            &None => return Err(B2Error::B2EngineError),
+            Some(ref a) => a,
+            None => return Err(B2Error::B2EngineError),
         };
         match buckets::list_buckets(&self.client, auth) {
             Ok(v) => Ok(v),
-            Err(e) => return Err(e)
+            Err(e) => Err(e)
         }
     }
 
@@ -174,8 +174,8 @@ impl Raze {
     /// Please see [raw list_all_file_names](../../api/files/misc/fn.list_all_file_names.html) for what this implies
     pub fn list_all_file_names(&mut self, bucket_id: &str, max_file_count: usize) -> Result<Vec<StoredFile>, B2Error> {
         let auth = match &self.b2auth {
-            &Some(ref a) => a,
-            &None => return Err(B2Error::B2EngineError),
+            Some(ref a) => a,
+            None => return Err(B2Error::B2EngineError),
         };
         misc::list_all_file_names(&self.client, auth, bucket_id, max_file_count)
     }
@@ -185,13 +185,19 @@ impl Raze {
     /// See also: [raw update_bucket](../../api/buckets/fn.update_bucket.html)
     pub fn update_bucket(&mut self, bucket_id: &str, bucket_type: Option<BucketType>, days_from_hide_to_delete: Option<u32>, days_from_upload_to_hide: Option<u32>) -> Result<Bucket, B2Error> {
         let auth = match &self.b2auth {
-            &Some(ref a) => a,
-            &None => return Err(B2Error::B2EngineError),
+            Some(ref a) => a,
+            None => return Err(B2Error::B2EngineError),
         };
         match buckets::update_bucket(&self.client, auth, bucket_id, bucket_type, days_from_hide_to_delete, days_from_upload_to_hide) {
             Ok(b) => Ok(b),
-            Err(e) => return Err(e),
+            Err(e) => Err(e),
         }
+    }
+}
+
+impl Default for Raze {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

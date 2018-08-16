@@ -6,7 +6,7 @@ use serde_json;
 use handle_b2error_kinds;
 use api::files::structs::*;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Request body used for the [b2_get_upload_url](https://www.backblaze.com/b2/docs/b2_get_upload_url.html) call
 struct GetUploadUrlBody<'a> {
@@ -50,7 +50,7 @@ pub fn get_upload_url(client: &reqwest::Client, auth: &auth::B2Auth, bucket_id: 
 }
 
 // Used for BOTH sending AND receiving info about deleting files
-#[derive(Deserialize, Serialize, Debug, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 /// Request body and returned result from the [b2_delete_file_version](https://www.backblaze.com/b2/docs/b2_delete_file_version.html) API call
 pub struct DeleteFile {
@@ -101,7 +101,7 @@ pub fn delete_file_version(client: &reqwest::Client, auth: &auth::B2Auth, file_n
 }
 
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 /// A list of [stored files](../structs/struct.StoredFile.html), obtained via [list_file_names](fn.list_file_names.html)
 ///

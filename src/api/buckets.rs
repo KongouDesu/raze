@@ -3,7 +3,6 @@ use api::auth;
 use B2Error;
 use serde_json;
 use handle_b2error_kinds;
-use std::collections::HashMap;
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -66,7 +65,7 @@ pub fn list_buckets(client: &reqwest::Client, auth: &auth::B2Auth) -> Result<Vec
     Ok(deserialized.buckets)
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 struct CreateBucketBody<'a> {
     account_id: &'a str,
@@ -110,7 +109,7 @@ pub fn create_bucket(client: &reqwest::Client, auth: &auth::B2Auth, name: &str, 
     Ok(deserialized)
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 struct DeleteBucketBody<'a> {
     account_id: &'a str,
