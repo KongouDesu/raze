@@ -163,12 +163,11 @@ impl Read for ThrottledHashAtEndOfBody {
     // Much like HashAtEndOfBody, but will sleep in-between reads to limit bandwidth usage
     fn read(&mut self, buf: &mut [u8]) -> Result<usize,std::io::Error> {
         // Try to read into the buffer
-        let len;
-        if buf.len() >= 2048 {
-            len = self.file.read(&mut buf[0..2048])?;
-        }else {
-            len = self.file.read(buf)?;
-        }
+        let len = if buf.len() >= 2048 {
+            self.file.read(&mut buf[0..2048])?
+        } else {
+            self.file.read(buf)?
+        };
         // There are now 3 possible cases
 
         // We read nothing, but haven't addded hash yet

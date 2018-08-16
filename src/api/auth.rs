@@ -55,10 +55,7 @@ pub fn authenticate_from_file(client: &reqwest::Client, file: &std::path::Path) 
         Err(e) => return Err(B2Error::IOError(e))
     };
     let mut contents = String::new();
-    match read.read_to_string(&mut contents) {
-        Err(e) => return Err(B2Error::IOError(e)),
-        _ => ()
-    };
+    if let Err(e) = read.read_to_string(&mut contents) { return Err(B2Error::IOError(e)) }
     let auth_str = contents.trim();
 
     authenticate(client,&auth_str)

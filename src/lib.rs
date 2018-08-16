@@ -62,10 +62,7 @@ impl B2Error {
     /// Same as [from_string](fn.from_string.html) but works directly on a reqwest::Response
     fn from_response(mut resp: reqwest::Response) -> B2Error {
         let mut res = String::new();
-        match resp.read_to_string(&mut res) {
-            Err(e) => return B2Error::IOError(e),
-            _ => ()
-        }
+        if let Err(e) = resp.read_to_string(&mut res) { return B2Error::IOError(e) }
         B2Error::from_string(&res)
     }
 }

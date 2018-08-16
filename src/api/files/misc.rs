@@ -192,8 +192,8 @@ mod tests {
     use std;
     use reqwest;
     use api::files::*;
-    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
-    use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
+    use ::tests::TEST_CREDENTIALS_FILE;
+    use ::tests::TEST_BUCKET_ID;
 
     // Tests that we can get an upload url
     // No need to verify the returned value, as it's guaranteed to be a valid UploadAuth

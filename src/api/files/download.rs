@@ -1,16 +1,8 @@
 use reqwest;
 use B2Error;
 use serde_json;
-use std::path::Path;
-use std::fs::File;
-use std::io::Read;
-use std;
-use sha1;
-use std::io::BufReader;
-use url::form_urlencoded;
 use api::auth::B2Auth;
 
-use handle_b2error_kinds;
 use api::files::structs::*;
 
 /// Download a file by it's assigned id
@@ -50,7 +42,7 @@ pub fn download_file_by_id(client: &reqwest::Client, auth: &B2Auth, file_id: &st
     };
     let fileinfo = FileInfo {
         content_length: len,
-        content_type: content_type,
+        content_type,
         x_bz_content_sha1: raw_header_to_str(headers,"x-bz-content-sha1"),
         x_bz_file_id: raw_header_to_str(headers,"x-bz-file-id"),
         x_bz_file_name: raw_header_to_str(headers,"x-bz-file-name"),
@@ -99,7 +91,7 @@ pub fn download_file_by_name(client: &reqwest::Client, auth: &B2Auth, bucket_nam
     };
     let fileinfo = FileInfo {
         content_length: len,
-        content_type: content_type,
+        content_type,
         x_bz_content_sha1: raw_header_to_str(headers,"x-bz-content-sha1"),
         x_bz_file_id: raw_header_to_str(headers,"x-bz-file-id"),
         x_bz_file_name: raw_header_to_str(headers,"x-bz-file-name"),
@@ -149,9 +141,8 @@ mod tests {
     use reqwest;
     use api::files::*;
     use api::files::upload::*;
-    use api::files::misc::*;
-    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
-    use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
+    use ::tests::TEST_CREDENTIALS_FILE;
+    use ::tests::TEST_BUCKET_ID;
 
     // Tests that we can upload a file, fails if get_upload_url fails
     // Tests that we can use both download methods

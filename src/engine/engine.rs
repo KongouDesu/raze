@@ -25,7 +25,7 @@ impl Raze {
         let c = reqwest::Client::builder()
             // The timeout is set arbitrarily high to prevent slow uploads from timing out
             // The BackBlaze backend can still timeout requests for other reasons
-            .timeout(std::time::Duration::new(100000000,0))
+            .timeout(std::time::Duration::new(100_000_000,0))
             .build()
             .unwrap();
 
@@ -304,7 +304,6 @@ mod tests {
         let mut r = engine::Raze::new();
         r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         let bucko = &r.list_buckets().unwrap()[0].bucket_id;
-        use api::buckets::BucketType;
         let n = r.update_bucket(&bucko, None, None, None);
         match n {
             Ok(n) => (),

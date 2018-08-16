@@ -83,7 +83,7 @@ pub fn create_bucket(client: &reqwest::Client, auth: &auth::B2Auth, name: &str, 
     let json = match serde_json::to_string(&CreateBucketBody {
         account_id: &auth.account_id,
         bucket_name: name,
-        bucket_type: bucket_type
+        bucket_type
     }) {
         Ok(v) => v,
         Err(e) => return Err(B2Error::SerdeError(e))
@@ -174,7 +174,7 @@ pub fn update_bucket(client: &reqwest::Client, auth: &auth::B2Auth, bucket_id: &
     };
     let re = UpdateBucket {
         account_id: &auth.account_id,
-        bucket_id: bucket_id,
+        bucket_id,
         bucket_type: btype_str,
         lifecycle_rules: vec![LifecycleRules {
             days_from_hiding_to_deleting: days_from_hide_to_delete,
@@ -215,8 +215,7 @@ mod tests {
     use std;
     use reqwest;
     use api::buckets;
-    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
-    use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
+    use ::tests::TEST_CREDENTIALS_FILE;
 
     // This also tests 'authenticate', as 'authenticate_from_file' calls it
     // The test passes as long as the call doesn't fail
@@ -237,7 +236,6 @@ mod tests {
         let client = reqwest::Client::new();
         let autho = auth::authenticate_from_file(&client, std::path::Path::new(TEST_CREDENTIALS_FILE)).unwrap();
         let bucko = &buckets::list_buckets(&client, &autho).unwrap()[0].bucket_id;
-        use api::buckets::BucketType;
         let n = buckets::update_bucket(&client, &autho, &bucko, None, None, None);
         match n {
             Ok(n) => (),
