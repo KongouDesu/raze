@@ -154,6 +154,7 @@ mod tests {
     use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
 
     // Tests that we can upload a file, fails if get_upload_url fails
+    // Tests that we can use both download methods
     // Tests that we can delete a file, won't be tested if uploading fails
     #[test]
     #[allow(unused_variables)]

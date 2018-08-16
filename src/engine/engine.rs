@@ -193,6 +193,30 @@ impl Raze {
             Err(e) => Err(e),
         }
     }
+
+    /// Downloads a file by the id assigned to it by the B2 API
+    ///
+    /// See also: [raw download_file_by_id](../../api/files/download/fn.download_file_by_id.html)
+    pub fn download_file_by_id(&mut self, file_id: &str) -> Result<(FileInfo, String), B2Error> {
+        let auth = match &self.b2auth {
+            Some(ref a) => a,
+            None => return Err(B2Error::B2EngineError),
+        };
+        files::download::download_file_by_id(&self.client, auth, file_id)
+    }
+
+    /// Downloads a file by the name you gave it when you uploaded it
+    ///
+    /// The name should be the full path, eg. prefix+name when you uploaded it
+    ///
+    /// See also: [raw download_file_by_name](../../api/files/download/fn.download_file_by_name.html)
+    pub fn download_file_by_name(&mut self, bucket_name: &str, file_id: &str) -> Result<(FileInfo, String), B2Error> {
+        let auth = match &self.b2auth {
+            Some(ref a) => a,
+            None => return Err(B2Error::B2EngineError),
+        };
+        files::download::download_file_by_name(&self.client, auth, bucket_name, file_id)
+    }
 }
 
 impl Default for Raze {
@@ -206,8 +230,9 @@ mod tests {
     use engine::engine;
     use std;
     use std::io::Read;
-    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
-    use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
+    use ::tests::TEST_CREDENTIALS_FILE;
+    use ::tests::TEST_BUCKET_ID;
+    use ::tests::TEST_BUCKET_NAME;
 
     // Tests for the various to get an authenticated engine
     #[test]
@@ -284,6 +309,50 @@ mod tests {
         match n {
             Ok(n) => (),
             Err(e) => assert!(false),
+        }
+    }
+
+    // Tests the download_file_by_id works
+    // Uploads a file, then tries retrieving and deleting it
+    // Attempts to delete the file again before it checks the downloads succeeded to avoid leaving a mess
+    #[test]
+    #[allow(unused_variables)]
+    fn test_download_by_id() {
+        let mut r = engine::Raze::new();
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.set_active_bucket(TEST_BUCKET_ID.to_string());
+        let n = r.upload_file(std::path::Path::new("./testfile.txt"),"some_folder").unwrap();
+
+        let result = r.download_file_by_id(&n.file_id);
+
+        // Delete file before assertions to prevent leaving files around
+        r.delete_file_version(n.file_name, n.file_id);
+
+        match result {
+            Ok(_t) => (),
+            Err(_e) => assert!(false),
+        }
+    }
+
+    // Tests the download_file_by_name works
+    // Uploads a file, then tries retrieving and deleting it
+    // Attempts to delete the file again before it checks the downloads succeeded to avoid leaving a mess
+    #[test]
+    #[allow(unused_variables)]
+    fn test_download_by_name() {
+        let mut r = engine::Raze::new();
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.set_active_bucket(TEST_BUCKET_ID.to_string());
+        let n = r.upload_file(std::path::Path::new("./testfile.txt"),"some_folder").unwrap();
+
+        let result = r.download_file_by_name(TEST_BUCKET_NAME,&n.file_name);
+
+        // Delete file before assertions to prevent leaving files around
+        r.delete_file_version(n.file_name, n.file_id);
+
+        match result {
+            Ok(_t) => (),
+            Err(_e) => assert!(false),
         }
     }
 }

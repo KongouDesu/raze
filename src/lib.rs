@@ -9,6 +9,8 @@
 // Running tests: tests require an auth file, by default 'credentials' located in the root of this project \
 // The file contains a single line, formatted as "keyId:applicationKey" without quotes \
 // The name and location of the file can be changed by editing it in the 'tests' section of this file
+// Additionally, the tests work on a bucket. This must be configured in the tests of lib.rs (this file)
+// To configure it, set the constants appropriately
 
 extern crate reqwest;
 extern crate base64;
@@ -116,6 +118,7 @@ impl std::error::Error for B2ApiError {
 mod tests {
     pub const TEST_CREDENTIALS_FILE: &str = "credentials";
     pub const TEST_BUCKET_ID: &str = "4663eedc6289033066000e13";
+    pub const TEST_BUCKET_NAME: &str = "uploaded-files";
     use B2Error;
 
     // Test that a B2ApiError (B2Error::B2Error) is properly deserialized from response json
