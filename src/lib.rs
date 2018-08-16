@@ -3,7 +3,7 @@
 //! Raze provides raw API bindings via the [API](api/index.html) module or an easy-to-use object-like struct via [engine](engine/index.html) \
 //! It is highly recommended to thoroughly read the BackBlaze B2 API documentation before using this crate
 //!
-//! TODO: Add link to raze-cli
+//! An example project using this library is available at https://github.com/KongouDesu/raze-cli/tree/master
 
 
 // Running tests: tests require an auth file, by default 'credentials' located in the root of this project \
