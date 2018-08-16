@@ -233,3 +233,17 @@ pub struct LifecycleRules<'a> {
     pub days_from_hiding_to_deleting: Option<u32>,
     pub file_name_prefix: &'a str,
 }
+
+#[derive(Debug, Clone)]
+/// Information on a downloaded file
+///
+/// This comes from headers in a non-json format, so we manually construct this
+pub struct FileInfo {
+    pub x_bz_file_name: Option<String>,
+    pub x_bz_file_id: Option<String>,
+    pub x_bz_content_sha1: Option<String>,
+    pub x_bz_upload_timestamp: Option<u64>,
+    pub x_bz_info_src_last_modified_millis: Option<u64>,
+    pub content_type: Option<String>,
+    pub content_length: Option<u64>,
+}

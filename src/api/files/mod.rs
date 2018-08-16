@@ -6,3 +6,5 @@ pub mod misc;
 ///
 /// Most of these structs are internal-only, used to serialize requests
 pub mod structs;
+/// Methods for downloading files. Large file API is currently not supported
+pub mod download;
