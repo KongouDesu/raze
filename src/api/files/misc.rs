@@ -54,8 +54,8 @@ pub fn get_upload_url(client: &reqwest::Client, auth: &auth::B2Auth, bucket_id: 
 #[serde(rename_all = "camelCase")]
 /// Request body and returned result from the [b2_delete_file_version](https://www.backblaze.com/b2/docs/b2_delete_file_version.html) API call
 pub struct DeleteFile {
-    file_name: String,
-    file_id: String
+    pub file_name: String,
+    pub file_id: String
 }
 
 /// Deletes a specific version of the file with the supplied name
