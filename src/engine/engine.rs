@@ -197,7 +197,7 @@ impl Raze {
     /// Downloads a file by the id assigned to it by the B2 API
     ///
     /// See also: [raw download_file_by_id](../../api/files/download/fn.download_file_by_id.html)
-    pub fn download_file_by_id(&mut self, file_id: &str) -> Result<(FileInfo, String), B2Error> {
+    pub fn download_file_by_id(&mut self, file_id: &str) -> Result<(FileInfo, reqwest::Response), B2Error> {
         let auth = match &self.b2auth {
             Some(ref a) => a,
             None => return Err(B2Error::B2EngineError),
@@ -210,12 +210,25 @@ impl Raze {
     /// The name should be the full path, eg. prefix+name when you uploaded it
     ///
     /// See also: [raw download_file_by_name](../../api/files/download/fn.download_file_by_name.html)
-    pub fn download_file_by_name(&mut self, bucket_name: &str, file_id: &str) -> Result<(FileInfo, String), B2Error> {
+    pub fn download_file_by_name(&mut self, bucket_name: &str, file_id: &str) -> Result<(FileInfo, reqwest::Response), B2Error> {
         let auth = match &self.b2auth {
             Some(ref a) => a,
             None => return Err(B2Error::B2EngineError),
         };
         files::download::download_file_by_name(&self.client, auth, bucket_name, file_id)
+    }
+
+    /// Convenience function for saving a Response from download_file_by_x to a file
+    ///
+    /// Returns the number of bytes written or an error
+    ///
+    /// File path is full (absolute or relative) path, eg. "/home/user/dog.jpg"
+    pub fn save_response_to_file(&mut self, mut resp: reqwest::Response, file_path: &str) -> Result<u64,B2Error> {
+        let mut file = match std::fs::File::create(file_path) {
+            Ok(f) => f,
+            Err(e) => return Err(B2Error::IOError(e)),
+        };
+        Ok(resp.copy_to(&mut file).unwrap())
     }
 }
 
@@ -353,5 +366,38 @@ mod tests {
             Ok(_t) => (),
             Err(_e) => assert!(false),
         }
+    }
+
+    // Tests that we can download and save a file
+    #[test]
+    #[allow(unused_variables)]
+    fn test_save_file() {
+        let mut r = engine::Raze::new();
+        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.set_active_bucket(TEST_BUCKET_ID.to_string());
+        let n = r.upload_file(std::path::Path::new("./testfile.txt"),"some_folder").unwrap();
+
+        let result = match r.download_file_by_name(TEST_BUCKET_NAME,&n.file_name) {
+            Ok(t) => t,
+            Err(e) => {
+                println!("{:?}", e);
+                assert!(false);
+                return
+            },
+        };
+        let saved = r.save_response_to_file(result.1, "test_save_file.txt");
+        // Delete file before assertions to prevent leaving files around
+        r.delete_file_version(n.file_name, n.file_id);
+        std::fs::remove_file("test_save_file.txt").unwrap();
+
+        match saved {
+            Ok(_t) => (),
+            Err(e) => {
+                println!("{:?}", e);
+                assert!(false)
+            }
+        }
+
+
     }
 }

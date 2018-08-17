@@ -7,99 +7,99 @@ use api::files::structs::*;
 
 /// Download a file by it's assigned id
 ///
-/// Returns a struct containing the file info and a string containing the raw file
+/// Returns a struct containing the file info and a request response
+/// See the 'download' module documentation for how to handle a response
+///
+/// If the file is in a public bucket, use [download_public_file_by_id](./fn.download_public_file_by_id.html) instead
 ///
 /// Equivalent to b2_download_file_by_id - [Official documentation](https://www.backblaze.com/b2/docs/b2_download_file_by_id.html)
-pub fn download_file_by_id(client: &reqwest::Client, auth: &B2Auth, file_id: &str) -> Result<(FileInfo,String), B2Error> {
-    let mut headers = reqwest::header::Headers::new();
-    // The auth token from an UploadAuth, see: get_upload_url
-    headers.set(reqwest::header::Authorization(auth.authorization_token.clone()));
-    // Send the request
-    let mut resp = match client.get(&format!("{}/b2api/v1/b2_download_file_by_id?fileId={}",auth.download_url,file_id))
-        .headers(headers)
-        .send() {
-        Ok(v) => v,
-        Err(e) => return Err(B2Error::ReqwestError(e))
-    };
-    // Read the response to a string containing the JSON response
-    let response_string = resp.text().unwrap();
-    // Test if the response body is an error, if not, the body will be the file and we continue to extract headers
-    use B2ApiError;
-    use B2Error;
-    match serde_json::from_str::<B2ApiError>(&response_string) {
-        Ok(v) => return Err(B2Error::B2Error(v)),
-        Err(_e) => (),
-    };
-    let headers = resp.headers();
-    use reqwest::header::*;
-    let len = match headers.get::<ContentLength>() {
-        Some(t) => Some(t.0),
-        None => None,
-    };
-    let content_type = match headers.get::<ContentType>() {
-        Some(t) => Some(format!("{}",t)),
-        None => None,
-    };
-    let fileinfo = FileInfo {
-        content_length: len,
-        content_type,
-        x_bz_content_sha1: raw_header_to_str(headers,"x-bz-content-sha1"),
-        x_bz_file_id: raw_header_to_str(headers,"x-bz-file-id"),
-        x_bz_file_name: raw_header_to_str(headers,"x-bz-file-name"),
-        x_bz_info_src_last_modified_millis: raw_header_to_u64(headers,"x-bz-info-src_last_modified_millis"),
-        x_bz_upload_timestamp: raw_header_to_u64(headers, "X-Bz-Upload-Timestamp"),
-    };
-    Ok((fileinfo, response_string))
+pub fn download_file_by_id(client: &reqwest::Client, auth: &B2Auth, file_id: &str) -> Result<(FileInfo,reqwest::Response), B2Error> {
+    download_file(client, auth, &format!("{}/b2api/v1/b2_download_file_by_id?fileId={}",auth.download_url,file_id), true)
+}
+
+/// Download a file in a public bucket by it's assigned id
+///
+/// Returns a struct containing the file info and a request response
+/// See the 'download' module documentation for how to handle a response
+///
+/// See also [Official documentation](https://www.backblaze.com/b2/docs/b2_download_file_by_id.html) and [download_file_by_id](./fn.download_file_by_id.html)
+pub fn download_public_file_by_id(client: &reqwest::Client, auth: &B2Auth, file_id: &str) -> Result<(FileInfo,reqwest::Response), B2Error> {
+    download_file(client, auth, &format!("{}/b2api/v1/b2_download_file_by_id?fileId={}",auth.download_url,file_id), false)
 }
 
 /// Download a file by it's given name
 ///
-/// Returns a struct containing the file info and a string containing the raw file
+/// Returns a struct containing the file info and a request response
+/// See the 'download' module documentation for how to handle a response
 ///
 /// The file name should be the full name on the server, eg. if you're emulating folders you should use the full path
 ///
+/// If the file is in a public bucket, use [download_public_file_by_name](./fn.download_public_file_by_name.html) instead
+///
 /// Equivalent to b2_download_file_by_name - [Official documentation](https://www.backblaze.com/b2/docs/b2_download_file_by_name.html)
-pub fn download_file_by_name(client: &reqwest::Client, auth: &B2Auth, bucket_name: &str, file_name: &str) -> Result<(FileInfo,String), B2Error> {
+pub fn download_file_by_name(client: &reqwest::Client, auth: &B2Auth, bucket_name: &str, file_name: &str) -> Result<(FileInfo,reqwest::Response), B2Error> {
+    download_file(client, auth, &format!("{}/file/{}/{}",auth.download_url,bucket_name, file_name), true)
+}
+
+/// Download a file in a public bucket by it's given name
+///
+/// Returns a struct containing the file info and a request response
+/// See the 'download' module documentation for how to handle a response
+///
+/// See also [Official documentation](https://www.backblaze.com/b2/docs/b2_download_file_by_name.html) and [download_file_by_name](./fn.download_file_by_name.html)
+pub fn download_public_file_by_name(client: &reqwest::Client, auth: &B2Auth, bucket_name: &str, file_name: &str) -> Result<(FileInfo,reqwest::Response), B2Error> {
+    download_file(client, auth, &format!("{}/file/{}/{}",auth.download_url,bucket_name, file_name), false)
+}
+
+/// Internal function for reducing duplicate code in download calls
+fn download_file(client: &reqwest::Client, auth: &B2Auth, request_path: &str, is_private: bool) -> Result<(FileInfo,reqwest::Response), B2Error> {
     let mut headers = reqwest::header::Headers::new();
     // The auth token from an UploadAuth, see: get_upload_url
-    headers.set(reqwest::header::Authorization(auth.authorization_token.clone()));
+    if is_private {
+        headers.set(reqwest::header::Authorization(auth.authorization_token.clone()));
+    }
     // Send the request
-    let mut resp = match client.get(&format!("{}/file/{}/{}",auth.download_url,bucket_name, file_name))
+    let mut resp = match client.get(request_path)
         .headers(headers)
         .send() {
         Ok(v) => v,
         Err(e) => return Err(B2Error::ReqwestError(e))
     };
-    // Read the response to a string containing the JSON response
-    let response_string = resp.text().unwrap();
     // Test if the response body is an error, if not, the body will be the file and we continue to extract headers
-    use B2ApiError;
-    use B2Error;
-    match serde_json::from_str::<B2ApiError>(&response_string) {
-        Ok(v) => return Err(B2Error::B2Error(v)),
-        Err(_e) => (),
-    };
-    let headers = resp.headers();
-    use reqwest::header::*;
-    let len = match headers.get::<ContentLength>() {
-        Some(t) => Some(t.0),
-        None => None,
-    };
-    let content_type = match headers.get::<ContentType>() {
-        Some(t) => Some(format!("{}",t)),
-        None => None,
-    };
-    let fileinfo = FileInfo {
-        content_length: len,
-        content_type,
-        x_bz_content_sha1: raw_header_to_str(headers,"x-bz-content-sha1"),
-        x_bz_file_id: raw_header_to_str(headers,"x-bz-file-id"),
-        x_bz_file_name: raw_header_to_str(headers,"x-bz-file-name"),
-        x_bz_info_src_last_modified_millis: raw_header_to_u64(headers,"x-bz-info-src_last_modified_millis"),
-        x_bz_upload_timestamp: raw_header_to_u64(headers, "X-Bz-Upload-Timestamp"),
-    };
-    Ok((fileinfo, response_string))
+    if !resp.status().is_success() {
+        use B2ApiError;
+        use B2Error;
+        let response_string = resp.text().unwrap();
+        match serde_json::from_str::<B2ApiError>(&response_string) {
+            Ok(v) => return Err(B2Error::B2Error(v)),
+            Err(_e) => (),
+        };
+    }
+    let fileinfo;
+    {
+        let headers = resp.headers();
+        use reqwest::header::*;
+        let len = match headers.get::<ContentLength>() {
+            Some(t) => Some(t.0),
+            None => None,
+        };
+        let content_type = match headers.get::<ContentType>() {
+            Some(t) => Some(format!("{}", t)),
+            None => None,
+        };
+        fileinfo = FileInfo {
+            content_length: len,
+            content_type,
+            x_bz_content_sha1: raw_header_to_str(headers, "x-bz-content-sha1"),
+            x_bz_file_id: raw_header_to_str(headers, "x-bz-file-id"),
+            x_bz_file_name: raw_header_to_str(headers, "x-bz-file-name"),
+            x_bz_info_src_last_modified_millis: raw_header_to_u64(headers, "x-bz-info-src_last_modified_millis"),
+            x_bz_upload_timestamp: raw_header_to_u64(headers, "X-Bz-Upload-Timestamp"),
+        };
+    }
+    Ok((fileinfo, resp))
 }
+
 
 /// Helper method for extracting headers from a 'Headers' struct
 ///

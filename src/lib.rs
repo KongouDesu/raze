@@ -153,8 +153,7 @@ mod tests {
                 match b2_error {
                     B2Error::B2Error(err) => {
                         // err.code and err.message has been known to be inconsistent
-                        // This might panic if they change the err.code or err.message
-                        assert_eq!("unauthorized", err.code);
+                        // As thus, we don't test them here
                         assert_eq!(401, err.status);
                     }
                     _ => assert!(false)
