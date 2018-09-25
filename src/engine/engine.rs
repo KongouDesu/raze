@@ -7,7 +7,6 @@ use B2Error;
 use std;
 use std::path::Path;
 use api::files::structs::*;
-use api::buckets::{Bucket,BucketType};
 
 #[derive(Debug, Clone)]
 /// An object-like struct.
@@ -25,7 +24,7 @@ impl Raze {
         let c = reqwest::Client::builder()
             // The timeout is set arbitrarily high to prevent slow uploads from timing out
             // The BackBlaze backend can still timeout requests for other reasons
-            .timeout(std::time::Duration::new(100_000_000,0))
+            .timeout(std::time::Duration::new(100000000,0))
             .build()
             .unwrap();
 
@@ -63,7 +62,7 @@ impl Raze {
     /// Same as [authenticate](fn.authenticate.html), but takes a path to a file containing only the auth string
     ///
     /// See also the [raw authenticate from file](../../api/auth/fn.authenticate_from_file.html)
-    pub fn authenticate_from_file(&mut self, file: &std::path::Path) -> Option<B2Error> {
+    pub fn new_from_auth_file(&mut self, file: &std::path::Path) -> Option<B2Error> {
         let auth = match auth::authenticate_from_file(&self.client, &file) {
             Ok(b2_auth) => b2_auth,
             Err(e) => return Some(e),
@@ -79,12 +78,12 @@ impl Raze {
     /// This function is called by the engine itself when it needs to
     fn authenticate_uploading(&mut self) -> Result<UploadAuth,B2Error> {
         let auth = match &self.b2auth {
-            Some(ref a) => a,
-            None => return Err(B2Error::B2EngineError),
+            &Some(ref a) => a,
+            &None => return Err(B2Error::B2EngineError),
         };
         let bucket = match &self.active_bucket {
-            Some(ref a) => a,
-            None => return Err(B2Error::B2EngineError),
+            &Some(ref a) => a,
+            &None => return Err(B2Error::B2EngineError),
         };
         let up_auth = match misc::get_upload_url(&self.client, &auth, &bucket) {
             Ok(up_auth) => up_auth,
@@ -140,16 +139,35 @@ impl Raze {
         upload::upload_file_throttled(&self.client, &upload_auth, &file_path, prefix, bandwidth)
     }
 
+    /// Hide a given file name
+    /// BackBlaze can be configured to delete this after x days
+    ///
+    /// See also: [raw hide_file](../../api/files/misc/fn.hide_file.html)
+    pub fn hide_file(&mut self, file_name: String) -> Option<B2Error> {
+        let auth = match &self.b2auth {
+            &Some(ref a) => a,
+            &None => return Some(B2Error::B2EngineError),
+        };
+        let bucket = match &self.active_bucket {
+            &Some(ref a) => a,
+            &None => return Some(B2Error::B2EngineError),
+        };
+        match misc::hide_file(&self.client, &auth, file_name, bucket.to_owned()) {
+            Err(e) => return Some(e),
+            _ => None,
+        }
+    }
+
     /// Delete the specified version of the given file
     ///
     /// See also: [raw delete_file_version](../../api/files/misc/fn.delete_file_version.html)
     pub fn delete_file_version(&mut self, file_name: String, file_id: String) -> Option<B2Error> {
         let auth = match &self.b2auth {
-            Some(ref a) => a,
-            None => return Some(B2Error::B2EngineError),
+            &Some(ref a) => a,
+            &None => return Some(B2Error::B2EngineError),
         };
         match misc::delete_file_version(&self.client, &auth, file_name, file_id) {
-            Err(e) => Some(e),
+            Err(e) => return Some(e),
             _ => None,
         }
     }
@@ -159,12 +177,12 @@ impl Raze {
     /// See also: [raw list_buckets](../../api/buckets/fn.list_buckets.html)
     pub fn list_buckets(&mut self) -> Result<Vec<buckets::Bucket>,B2Error> {
         let auth = match &self.b2auth {
-            Some(ref a) => a,
-            None => return Err(B2Error::B2EngineError),
+            &Some(ref a) => a,
+            &None => return Err(B2Error::B2EngineError),
         };
         match buckets::list_buckets(&self.client, auth) {
             Ok(v) => Ok(v),
-            Err(e) => Err(e)
+            Err(e) => return Err(e)
         }
     }
 
@@ -174,67 +192,10 @@ impl Raze {
     /// Please see [raw list_all_file_names](../../api/files/misc/fn.list_all_file_names.html) for what this implies
     pub fn list_all_file_names(&mut self, bucket_id: &str, max_file_count: usize) -> Result<Vec<StoredFile>, B2Error> {
         let auth = match &self.b2auth {
-            Some(ref a) => a,
-            None => return Err(B2Error::B2EngineError),
+            &Some(ref a) => a,
+            &None => return Err(B2Error::B2EngineError),
         };
         misc::list_all_file_names(&self.client, auth, bucket_id, max_file_count)
-    }
-
-    /// Updates the type and days until hiding or deleting files
-    ///
-    /// See also: [raw update_bucket](../../api/buckets/fn.update_bucket.html)
-    pub fn update_bucket(&mut self, bucket_id: &str, bucket_type: Option<BucketType>, days_from_hide_to_delete: Option<u32>, days_from_upload_to_hide: Option<u32>) -> Result<Bucket, B2Error> {
-        let auth = match &self.b2auth {
-            Some(ref a) => a,
-            None => return Err(B2Error::B2EngineError),
-        };
-        match buckets::update_bucket(&self.client, auth, bucket_id, bucket_type, days_from_hide_to_delete, days_from_upload_to_hide) {
-            Ok(b) => Ok(b),
-            Err(e) => Err(e),
-        }
-    }
-
-    /// Downloads a file by the id assigned to it by the B2 API
-    ///
-    /// See also: [raw download_file_by_id](../../api/files/download/fn.download_file_by_id.html)
-    pub fn download_file_by_id(&mut self, file_id: &str) -> Result<(FileInfo, reqwest::Response), B2Error> {
-        let auth = match &self.b2auth {
-            Some(ref a) => a,
-            None => return Err(B2Error::B2EngineError),
-        };
-        files::download::download_file_by_id(&self.client, auth, file_id)
-    }
-
-    /// Downloads a file by the name you gave it when you uploaded it
-    ///
-    /// The name should be the full path, eg. prefix+name when you uploaded it
-    ///
-    /// See also: [raw download_file_by_name](../../api/files/download/fn.download_file_by_name.html)
-    pub fn download_file_by_name(&mut self, bucket_name: &str, file_id: &str) -> Result<(FileInfo, reqwest::Response), B2Error> {
-        let auth = match &self.b2auth {
-            Some(ref a) => a,
-            None => return Err(B2Error::B2EngineError),
-        };
-        files::download::download_file_by_name(&self.client, auth, bucket_name, file_id)
-    }
-
-    /// Convenience function for saving a Response from download_file_by_x to a file
-    ///
-    /// Returns the number of bytes written or an error
-    ///
-    /// File path is full (absolute or relative) path, eg. "/home/user/dog.jpg"
-    pub fn save_response_to_file(&mut self, mut resp: reqwest::Response, file_path: &str) -> Result<u64,B2Error> {
-        let mut file = match std::fs::File::create(file_path) {
-            Ok(f) => f,
-            Err(e) => return Err(B2Error::IOError(e)),
-        };
-        Ok(resp.copy_to(&mut file).unwrap())
-    }
-}
-
-impl Default for Raze {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -243,15 +204,14 @@ mod tests {
     use engine::engine;
     use std;
     use std::io::Read;
-    use ::tests::TEST_CREDENTIALS_FILE;
-    use ::tests::TEST_BUCKET_ID;
-    use ::tests::TEST_BUCKET_NAME;
+    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
+    use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
 
     // Tests for the various to get an authenticated engine
     #[test]
     fn test_auth_from_file() {
         let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
     }
 
     #[test]
@@ -281,7 +241,7 @@ mod tests {
     #[allow(unused_variables)]
     fn test_upload_and_delete() {
         let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         r.set_active_bucket(TEST_BUCKET_ID.to_string());
         let n = r.upload_file(&std::path::Path::new("./testfile.txt"), "").unwrap();
         r.delete_file_version(n.file_name, n.file_id);
@@ -292,7 +252,7 @@ mod tests {
     #[allow(unused_variables)]
     fn test_upload_streaming() {
         let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         r.set_active_bucket(TEST_BUCKET_ID.to_string());
         let n = r.upload_file_streaming(&std::path::Path::new("./testfile.txt"), "").unwrap();
         r.delete_file_version(n.file_name, n.file_id);
@@ -304,100 +264,7 @@ mod tests {
     #[allow(unused_variables)]
     fn test_list_buckets() {
         let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
+        r.new_from_auth_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
         let list = r.list_buckets().unwrap();
-    }
-
-    #[test]
-    #[allow(unused_variables)]
-    // This will test than update_bucket call can succeed
-    // By default this will call on the first bucket in your account, but the settings are all configured to not changed anything
-    // Still, don't blame me if it changes something you didn't expect :)
-    fn test_update_bucket_engine() {
-        let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
-        let bucko = &r.list_buckets().unwrap()[0].bucket_id;
-        let n = r.update_bucket(&bucko, None, None, None);
-        match n {
-            Ok(n) => (),
-            Err(e) => assert!(false),
-        }
-    }
-
-    // Tests the download_file_by_id works
-    // Uploads a file, then tries retrieving and deleting it
-    // Attempts to delete the file again before it checks the downloads succeeded to avoid leaving a mess
-    #[test]
-    #[allow(unused_variables)]
-    fn test_download_by_id() {
-        let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
-        r.set_active_bucket(TEST_BUCKET_ID.to_string());
-        let n = r.upload_file(std::path::Path::new("./testfile.txt"),"some_folder").unwrap();
-
-        let result = r.download_file_by_id(&n.file_id);
-
-        // Delete file before assertions to prevent leaving files around
-        r.delete_file_version(n.file_name, n.file_id);
-
-        match result {
-            Ok(_t) => (),
-            Err(_e) => assert!(false),
-        }
-    }
-
-    // Tests the download_file_by_name works
-    // Uploads a file, then tries retrieving and deleting it
-    // Attempts to delete the file again before it checks the downloads succeeded to avoid leaving a mess
-    #[test]
-    #[allow(unused_variables)]
-    fn test_download_by_name() {
-        let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
-        r.set_active_bucket(TEST_BUCKET_ID.to_string());
-        let n = r.upload_file(std::path::Path::new("./testfile.txt"),"some_folder").unwrap();
-
-        let result = r.download_file_by_name(TEST_BUCKET_NAME,&n.file_name);
-
-        // Delete file before assertions to prevent leaving files around
-        r.delete_file_version(n.file_name, n.file_id);
-
-        match result {
-            Ok(_t) => (),
-            Err(_e) => assert!(false),
-        }
-    }
-
-    // Tests that we can download and save a file
-    #[test]
-    #[allow(unused_variables)]
-    fn test_save_file() {
-        let mut r = engine::Raze::new();
-        r.authenticate_from_file(std::path::Path::new(TEST_CREDENTIALS_FILE));
-        r.set_active_bucket(TEST_BUCKET_ID.to_string());
-        let n = r.upload_file(std::path::Path::new("./testfile.txt"),"some_folder").unwrap();
-
-        let result = match r.download_file_by_name(TEST_BUCKET_NAME,&n.file_name) {
-            Ok(t) => t,
-            Err(e) => {
-                println!("{:?}", e);
-                assert!(false);
-                return
-            },
-        };
-        let saved = r.save_response_to_file(result.1, "test_save_file.txt");
-        // Delete file before assertions to prevent leaving files around
-        r.delete_file_version(n.file_name, n.file_id);
-        std::fs::remove_file("test_save_file.txt").unwrap();
-
-        match saved {
-            Ok(_t) => (),
-            Err(e) => {
-                println!("{:?}", e);
-                assert!(false)
-            }
-        }
-
-
     }
 }

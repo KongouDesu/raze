@@ -163,11 +163,12 @@ impl Read for ThrottledHashAtEndOfBody {
     // Much like HashAtEndOfBody, but will sleep in-between reads to limit bandwidth usage
     fn read(&mut self, buf: &mut [u8]) -> Result<usize,std::io::Error> {
         // Try to read into the buffer
-        let len = if buf.len() >= 2048 {
-            self.file.read(&mut buf[0..2048])?
-        } else {
-            self.file.read(buf)?
-        };
+        let len;
+        if buf.len() >= 2048 {
+            len = self.file.read(&mut buf[0..2048])?;
+        }else {
+            len = self.file.read(buf)?;
+        }
         // There are now 3 possible cases
 
         // We read nothing, but haven't addded hash yet
@@ -202,47 +203,11 @@ impl Read for ThrottledHashAtEndOfBody {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 /// Request body used for the [b2_list_file_names](https://www.backblaze.com/b2/docs/b2_list_file_names.html) call
 pub(crate) struct ListFileBody {
     pub bucket_id: String,
     pub start_file_name: String,
     pub max_file_count: usize,
-}
-
-#[derive(Serialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-/// Request body for the [b2_update_bucket](https://www.backblaze.com/b2/docs/b2_update_bucket.html) call
-pub(crate) struct UpdateBucket<'a> {
-    pub account_id: &'a str,
-    pub bucket_id: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub bucket_type: Option<&'a str>,
-    pub lifecycle_rules: Vec<LifecycleRules<'a>>
-}
-
-#[derive(Serialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-/// sub-struct for UpdateBucket, contains lifecycle rules
-pub struct LifecycleRules<'a> {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub days_from_uploading_to_hiding: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub days_from_hiding_to_deleting: Option<u32>,
-    pub file_name_prefix: &'a str,
-}
-
-#[derive(Debug, Clone)]
-/// Information on a downloaded file
-///
-/// This comes from headers in a non-json format, so we manually construct this
-pub struct FileInfo {
-    pub x_bz_file_name: Option<String>,
-    pub x_bz_file_id: Option<String>,
-    pub x_bz_content_sha1: Option<String>,
-    pub x_bz_upload_timestamp: Option<u64>,
-    pub x_bz_info_src_last_modified_millis: Option<u64>,
-    pub content_type: Option<String>,
-    pub content_length: Option<u64>,
 }

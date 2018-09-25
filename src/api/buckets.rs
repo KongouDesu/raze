@@ -65,7 +65,7 @@ pub fn list_buckets(client: &reqwest::Client, auth: &auth::B2Auth) -> Result<Vec
     Ok(deserialized.buckets)
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct CreateBucketBody<'a> {
     account_id: &'a str,
@@ -83,7 +83,7 @@ pub fn create_bucket(client: &reqwest::Client, auth: &auth::B2Auth, name: &str, 
     let json = match serde_json::to_string(&CreateBucketBody {
         account_id: &auth.account_id,
         bucket_name: name,
-        bucket_type
+        bucket_type: bucket_type
     }) {
         Ok(v) => v,
         Err(e) => return Err(B2Error::SerdeError(e))
@@ -109,7 +109,7 @@ pub fn create_bucket(client: &reqwest::Client, auth: &auth::B2Auth, name: &str, 
     Ok(deserialized)
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct DeleteBucketBody<'a> {
     account_id: &'a str,
@@ -153,60 +153,13 @@ pub fn delete_bucket(client: &reqwest::Client, auth: &auth::B2Auth, id: &str) ->
     Ok(deserialized)
 }
 
-/// Updates the settings of a bucket. This means public or private as well as delete and hide timing
+/// Updates the settings of a bucket, including type, info, CORS and lifecycle rules \
+/// NOT IMPLEMENTED YET
 ///
-/// The 'bucket_type' can only be "AllPrivate" or "AllPublic" -- "Snapshot" is not valid and will return an error
-///
+/// A revision number can be providing, preventing updates unless the provided and stored value match
 /// Official documentation: [b2_update_bucket](https://www.backblaze.com/b2/docs/b2_update_bucket.html)
-pub fn update_bucket(client: &reqwest::Client, auth: &auth::B2Auth, bucket_id: &str, bucket_type: Option<BucketType>, days_from_hide_to_delete: Option<u32>, days_from_upload_to_hide: Option<u32>) -> Result<Bucket,B2Error>{
-    use api::files::structs::{UpdateBucket,LifecycleRules};
-    use api::buckets::BucketType::*;
-    // Get the bucket type, if it's None, fall back to the existing bucket type
-    let btype_str = match bucket_type {
-        Some(b) => {
-            match b {
-                AllPublic => Some("allPublic"),
-                AllPrivate => Some("allPrivate"),
-                Snapshot => return Err(B2Error::InputError("snapshot is not a valid bucket type here".to_owned())),
-            }
-        },
-        None => None
-    };
-    let re = UpdateBucket {
-        account_id: &auth.account_id,
-        bucket_id,
-        bucket_type: btype_str,
-        lifecycle_rules: vec![LifecycleRules {
-            days_from_hiding_to_deleting: days_from_hide_to_delete,
-            days_from_uploading_to_hiding: days_from_upload_to_hide,
-            file_name_prefix: "", // Set to blank, since it can't be None despite being optional in docs??
-        }],
-    };
-    let json = match serde_json::to_string(&re) {
-        Ok(t) => t,
-        Err(e) => return Err(B2Error::SerdeError(e)),
-    };
-
-    let header = reqwest::header::Authorization(auth.authorization_token.clone());
-    let body = reqwest::Body::from(json);
-    let mut resp = match client.post(&format!("{}{}", auth.api_url, "/b2api/v1/b2_update_bucket"))
-        .header(header)
-        .body(body)
-        .send() {
-        Ok(v) => v,
-        Err(e) => return Err(B2Error::ReqwestError(e))
-    };
-
-    // Read the response to a string containing the JSON response
-    let response_string = resp.text().unwrap();
-    // Convert the response string from JSON to a struct
-    let deserialized: Bucket = match serde_json::from_str(&response_string) {
-        Ok(v) => v,
-        Err(_e) => {
-            return Err(handle_b2error_kinds(&response_string))
-        }
-    };
-    Ok(deserialized)
+pub fn update_bucket(){
+    unimplemented!();
 }
 
 #[cfg(test)]
@@ -215,7 +168,7 @@ mod tests {
     use std;
     use reqwest;
     use api::buckets;
-    use ::tests::TEST_CREDENTIALS_FILE;
+    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
 
     // This also tests 'authenticate', as 'authenticate_from_file' calls it
     // The test passes as long as the call doesn't fail
@@ -225,21 +178,5 @@ mod tests {
         let client = reqwest::Client::new();
         let autho = auth::authenticate_from_file(&client, std::path::Path::new(TEST_CREDENTIALS_FILE)).unwrap();
         let res = buckets::list_buckets(&client, &autho).unwrap();
-    }
-
-    #[test]
-    #[allow(unused_variables)]
-    // This will test than update_bucket call can succeed
-    // By default this will call on the first bucket in your account, but the settings are all configured to not changed anything
-    // Still, don't blame me if it changes something you didn't expect :)
-    fn test_update_bucket() {
-        let client = reqwest::Client::new();
-        let autho = auth::authenticate_from_file(&client, std::path::Path::new(TEST_CREDENTIALS_FILE)).unwrap();
-        let bucko = &buckets::list_buckets(&client, &autho).unwrap()[0].bucket_id;
-        let n = buckets::update_bucket(&client, &autho, &bucko, None, None, None);
-        match n {
-            Ok(n) => (),
-            Err(e) => assert!(false),
-        }
     }
 }

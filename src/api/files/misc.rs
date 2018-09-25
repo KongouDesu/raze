@@ -6,7 +6,7 @@ use serde_json;
 use handle_b2error_kinds;
 use api::files::structs::*;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 /// Request body used for the [b2_get_upload_url](https://www.backblaze.com/b2/docs/b2_get_upload_url.html) call
 struct GetUploadUrlBody<'a> {
@@ -50,12 +50,12 @@ pub fn get_upload_url(client: &reqwest::Client, auth: &auth::B2Auth, bucket_id: 
 }
 
 // Used for BOTH sending AND receiving info about deleting files
-#[derive(Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
+#[derive(Deserialize, Serialize, Debug, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 /// Request body and returned result from the [b2_delete_file_version](https://www.backblaze.com/b2/docs/b2_delete_file_version.html) API call
 pub struct DeleteFile {
-    pub file_name: String,
-    pub file_id: String
+    file_name: String,
+    file_id: String
 }
 
 /// Deletes a specific version of the file with the supplied name
@@ -100,8 +100,59 @@ pub fn delete_file_version(client: &reqwest::Client, auth: &auth::B2Auth, file_n
     Ok(deserialized)
 }
 
+// Used to send a HideFile request
+#[derive(Deserialize, Serialize, Debug, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+/// Request body for the [b2_hide_file](https://www.backblaze.com/b2/docs/b2_hide_file.html) API call
+pub struct HideFileBody {
+    file_name: String,
+    bucket_id: String
+}
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+/// Deletes a specific version of the file with the supplied name
+///
+/// The file_name is the full filename as stored on the server. Remember that BackBlaze does not have folders
+///
+/// Official documentation: [b2_delete_file_version](https://www.backblaze.com/b2/docs/b2_delete_file_version.html)
+pub fn hide_file(client: &reqwest::Client, auth: &auth::B2Auth, file_name: String, bucket_id: String) -> Result<StoredFile,B2Error> {
+    // Auth token header
+    let header = reqwest::header::Authorization(auth.authorization_token.clone());
+    // Create the JSON body
+    let json = match serde_json::to_string(&HideFileBody {
+        file_name,
+        bucket_id
+    }) {
+        Ok(v) => v,
+        Err(e) => return Err(B2Error::SerdeError(e))
+    };
+    // Set the body to the created JSON
+    let body = reqwest::Body::from(json);
+
+    // Send the request
+    let mut resp = match client.post(&format!("{}{}", auth.api_url, "/b2api/v1/b2_hide_file"))
+        .header(header)
+        .body(body)
+        .send() {
+        Ok(v) => v,
+        Err(e) => return Err(B2Error::ReqwestError(e))
+    };
+    if resp.status().is_client_error() {
+        return Err(B2Error::from_response(resp))
+    }
+    // Read the response to a string containing the JSON response
+    let response_string = resp.text().unwrap();
+    // Convert the response string from JSON to a struct
+    let deserialized: StoredFile = match serde_json::from_str(&response_string) {
+        Ok(v) => v,
+        Err(_e) => {
+            return Err(handle_b2error_kinds(&response_string))
+        }
+    };
+    Ok(deserialized)
+}
+
+
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 /// A list of [stored files](../structs/struct.StoredFile.html), obtained via [list_file_names](fn.list_file_names.html)
 ///
@@ -192,8 +243,8 @@ mod tests {
     use std;
     use reqwest;
     use api::files::*;
-    use ::tests::TEST_CREDENTIALS_FILE;
-    use ::tests::TEST_BUCKET_ID;
+    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
+    use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
 
     // Tests that we can get an upload url
     // No need to verify the returned value, as it's guaranteed to be a valid UploadAuth

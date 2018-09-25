@@ -3,14 +3,12 @@
 //! Raze provides raw API bindings via the [API](api/index.html) module or an easy-to-use object-like struct via [engine](engine/index.html) \
 //! It is highly recommended to thoroughly read the BackBlaze B2 API documentation before using this crate
 //!
-//! An example project using this library is available at https://github.com/KongouDesu/raze-cli/tree/master
+//! TODO: Add link to raze-cli
 
 
 // Running tests: tests require an auth file, by default 'credentials' located in the root of this project \
 // The file contains a single line, formatted as "keyId:applicationKey" without quotes \
 // The name and location of the file can be changed by editing it in the 'tests' section of this file
-// Additionally, the tests work on a bucket. This must be configured in the tests of lib.rs (this file)
-// To configure it, set the constants appropriately
 
 extern crate reqwest;
 extern crate base64;
@@ -38,8 +36,6 @@ pub enum B2Error {
     SerdeError(serde_json::Error),
     /// API related errors, eg. invalid requests
     B2Error(B2ApiError),
-    /// An error caused by passing invalid input to one of this library's functions
-    InputError(String),
     /// Errors returned from the engine module
     B2EngineError,
 }
@@ -62,7 +58,10 @@ impl B2Error {
     /// Same as [from_string](fn.from_string.html) but works directly on a reqwest::Response
     fn from_response(mut resp: reqwest::Response) -> B2Error {
         let mut res = String::new();
-        if let Err(e) = resp.read_to_string(&mut res) { return B2Error::IOError(e) }
+        match resp.read_to_string(&mut res) {
+            Err(e) => return B2Error::IOError(e),
+            _ => ()
+        }
         B2Error::from_string(&res)
     }
 }
@@ -76,7 +75,7 @@ fn handle_b2error_kinds(n: &str) -> B2Error {
     };
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize)]
 /// An API error, most likely from a bad API call
 ///
 /// Official documentation: [Error Handling](https://www.backblaze.com/b2/docs/calling.html#error_handling)
@@ -115,7 +114,6 @@ impl std::error::Error for B2ApiError {
 mod tests {
     pub const TEST_CREDENTIALS_FILE: &str = "credentials";
     pub const TEST_BUCKET_ID: &str = "4663eedc6289033066000e13";
-    pub const TEST_BUCKET_NAME: &str = "uploaded-files";
     use B2Error;
 
     // Test that a B2ApiError (B2Error::B2Error) is properly deserialized from response json
@@ -153,7 +151,8 @@ mod tests {
                 match b2_error {
                     B2Error::B2Error(err) => {
                         // err.code and err.message has been known to be inconsistent
-                        // As thus, we don't test them here
+                        // This can be enabled, but might panic if they change the err.code or err.message
+                        // assert_eq!("bad_auth_token", err.code);
                         assert_eq!(401, err.status);
                     }
                     _ => assert!(false)

@@ -239,8 +239,8 @@ mod tests {
     use api::files::*;
     use api::files::upload::*;
     use api::files::misc::*;
-    use ::tests::TEST_CREDENTIALS_FILE;
-    use ::tests::TEST_BUCKET_ID;
+    use ::tests::TEST_CREDENTIALS_FILE as TEST_CREDENTIALS_FILE;
+    use ::tests::TEST_BUCKET_ID as TEST_BUCKET_ID;
 
     // Tests that we can upload a file, fails if get_upload_url fails
     // Tests that we can delete a file, won't be tested if uploading fails
