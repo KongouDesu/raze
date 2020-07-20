@@ -12,12 +12,14 @@ extern crate serde_json;
 extern crate sha1;
 extern crate url;
 
+pub mod api;
+
 use std::fmt;
 use std::io::Read;
 
 #[derive(Debug)]
 /// The various kinds of errors this crate may return
-pub enum B2Error {
+pub enum Error {
     /// HTTP related errors
     ReqwestError(reqwest::Error),
     /// IO related errors
@@ -28,38 +30,36 @@ pub enum B2Error {
     B2Error(B2ApiError),
 }
 
-impl B2Error {
+impl Error {
     /// Constructs a B2Error from a json string
     ///
     /// When we get an API error, we get an error message as a string \
     /// This will create a B2Error containing that string
     ///
     /// In case the error message is invalid JSON, this returns a SerdeError instead
-    fn from_json(error: &str) -> B2Error {
+    fn from_json(error: &str) -> Error {
         let deserialized: B2ApiError = match serde_json::from_str(error) {
             Ok(v) => v,
-            Err(e) => return B2Error::SerdeError(e)
+            Err(e) => return Error::SerdeError(e)
         };
-        B2Error::B2Error(deserialized)
+        Error::B2Error(deserialized)
     }
 
     /// Same as [from_string](fn.from_json.html) but works directly on a reqwest::Response
-    fn from_response(mut resp: reqwest::Response) -> B2Error {
-        let mut res = String::new();
-        match resp.read_to_string(&mut res) {
-            Err(e) => return B2Error::IOError(e),
-            _ => ()
+    fn from_response(mut resp: reqwest::blocking::Response) -> Error {
+        match resp.text() {
+            Ok(s) =>  Error::from_json(&s),
+            Err(e) => return Error::ReqwestError(e),
         }
-        B2Error::from_json(&res)
     }
 }
 
 // Helper method for figuring out if an error was a Serde or API error
 // Takes the json-str, return either a B2 API error or a Serde error
-fn handle_b2error_kinds(n: &str) -> B2Error {
+fn handle_b2error_kinds(n: &str) -> Error {
     let _b2err: B2ApiError = match serde_json::from_str(&n) {
-        Ok(v) => return B2Error::B2Error(v),
-        Err(e) => return B2Error::SerdeError(e),
+        Ok(v) => return Error::B2Error(v),
+        Err(e) => return Error::SerdeError(e),
     };
 }
 
@@ -85,5 +85,18 @@ impl fmt::Debug for B2ApiError {
 impl fmt::Display for B2ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "A B2 API Error occurred. Error code {} - {}. Error message: {}",self.status, self.code, self.message)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use Error;
+    use api::*;
+
+    #[test]
+    fn test_dev() {
+        let client = reqwest::blocking::Client::new();
+        let resp = b2_authorize_account(client, "a:b").unwrap();
+        println!("{:?}",resp.api_url_for("b2_list_file_names"));
     }
 }
