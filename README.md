@@ -39,7 +39,7 @@ b2_get_upload_part_url          | ❌
 b2_get_upload_url               | 🚧
 b2_hide_file                    | 🚧
 b2_list_buckets                 | ✔
-b2_list_file_names              | 🚧
+b2_list_file_names              | ✔
 b2_list_file_versions           | ?
 b2_list_keys                    | ❌
 b2_list_parts                   | ❌
