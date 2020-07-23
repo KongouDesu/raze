@@ -1,6 +1,4 @@
 use reqwest::blocking::Client;
-use std;
-use std::io::Read;
 use base64::{encode};
 use Error;
 use serde_json;
@@ -29,12 +27,12 @@ impl B2Auth {
 
 /// 'keystring' is a string with the format "applicationKeyId:applicationKey" (Remember the colon)
 /// https://www.backblaze.com/b2/docs/b2_authorize_account.html
-pub fn b2_authorize_account<T: AsRef<str>>(client: Client, keystring: T) -> Result<B2Auth, Error> {
+pub fn b2_authorize_account<T: AsRef<str>>(client: &Client, keystring: T) -> Result<B2Auth, Error> {
     // Encode the key
     let encoded = format!("{}{}", "Basic ", encode(keystring.as_ref()));
 
     // Submit the request
-    let mut resp = match client.get("https://api.backblazeb2.com/b2api/v2/b2_authorize_account")
+    let resp = match client.get("https://api.backblazeb2.com/b2api/v2/b2_authorize_account")
         .header(reqwest::header::AUTHORIZATION, encoded)
         .send() {
         Ok(v) => v,

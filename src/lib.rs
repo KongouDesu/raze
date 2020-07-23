@@ -2,10 +2,10 @@
 //!
 //! Raze provides raw API bindings via the [API](api/index.html) module or an easy-to-use object-like struct via [engine](engine/index.html) \
 //! It is highly recommended to thoroughly read the BackBlaze B2 API documentation before using this crate
+#![allow(dead_code)]
 
 extern crate reqwest;
 extern crate base64;
-#[macro_use] extern crate hyper;
 #[macro_use] extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
@@ -15,8 +15,6 @@ extern crate url;
 pub mod api;
 
 use std::fmt;
-use std::io::Read;
-
 #[derive(Debug)]
 /// The various kinds of errors this crate may return
 pub enum Error {
@@ -36,7 +34,7 @@ impl Error {
     /// When we get an API error, we get an error message as a string \
     /// This will create a B2Error containing that string
     ///
-    /// In case the error message is invalid JSON, this returns a SerdeError instead
+    /// In case the error message is invalid/unexpected JSON, this returns a SerdeError instead
     fn from_json(error: &str) -> Error {
         let deserialized: B2ApiError = match serde_json::from_str(error) {
             Ok(v) => v,
@@ -46,7 +44,7 @@ impl Error {
     }
 
     /// Same as [from_string](fn.from_json.html) but works directly on a reqwest::Response
-    fn from_response(mut resp: reqwest::blocking::Response) -> Error {
+    fn from_response(resp: reqwest::blocking::Response) -> Error {
         match resp.text() {
             Ok(s) =>  Error::from_json(&s),
             Err(e) => return Error::ReqwestError(e),
@@ -96,7 +94,9 @@ mod tests {
     #[test]
     fn test_dev() {
         let client = reqwest::blocking::Client::new();
-        let resp = b2_authorize_account(client, "a:b").unwrap();
-        println!("{:?}",resp.api_url_for("b2_list_file_names"));
+        let auth = b2_authorize_account(&client, include_str!("../credentials")).unwrap();
+        println!("{:?}",auth);
+        let resp = b2_list_buckets(&client, &auth);
+        println!("{:?}",resp);
     }
 }
