@@ -90,13 +90,40 @@ impl fmt::Display for B2ApiError {
 mod tests {
     use Error;
     use api::*;
+    use std::io::{BufReader, Read, Seek, SeekFrom};
 
     #[test]
     fn test_dev() {
         let client = reqwest::blocking::Client::new();
         let auth = b2_authorize_account(&client, include_str!("../credentials")).unwrap();
         println!("{:?}",auth);
-        let resp = b2_list_buckets(&client, &auth);
-        println!("{:?}",resp);
+        let upauth = b2_get_upload_url(&client, &auth, "d6f36e3c6239033066000e13").unwrap();
+        println!("{:?}", upauth);
+        let file = std::fs::File::open("Cargo.toml").unwrap();
+        let size = file.metadata().unwrap().len();
+        let modf = file.metadata().unwrap().modified().unwrap().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()*1000;
+        let mut bytes = Vec::new();
+        let mut reader = BufReader::new(file);
+        reader.read_to_end(&mut bytes).unwrap();
+        reader.seek(SeekFrom::Start(0));
+        let file_hash = sha1::Sha1::from(&bytes).hexdigest();
+
+        let param = FileParameters {
+            file_name: "Cargo.toml",
+            file_size: size,
+            content_type: None,
+            content_sha1: Sha1Variant::Precomputed(&file_hash),
+            last_modified_millis: modf,
+        };
+
+        let resp1 = b2_upload_file(&client, &upauth, reader, param).unwrap();
+        println!("{:?}", resp1);
+
+        let resp2 = b2_hide_file(&client, &auth, upauth.bucket_id, &resp1.file_name);
+        println!("{:?}", resp2);
+
+        let resp3 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
+        println!("{:?}", resp3);
+
     }
 }

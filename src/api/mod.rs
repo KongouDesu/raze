@@ -24,7 +24,7 @@ pub struct BucketResult {
     pub bucket_type: B2BucketType,
 }
 
-/// API response from 'b2_upload_file'
+/// API response from 'b2_upload_file' and 'b2_hide_file'
 /// 'b2_list_file_names' and 'b2_list_file_versions' returns a list of them
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -55,3 +55,12 @@ pub use self::b2_list_buckets::*;
 
 mod b2_list_file_names;
 pub use self::b2_list_file_names::*;
+
+mod b2_get_upload_url;
+pub use self::b2_get_upload_url::*;
+mod b2_upload_file;
+pub use self::b2_upload_file::*;
+mod b2_delete_file_version;
+pub use self::b2_delete_file_version::*;
+mod b2_hide_file;
+pub use self::b2_hide_file::*;

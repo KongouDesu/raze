@@ -1,27 +1,30 @@
 use reqwest::blocking::Client;
 use ::Error;
-use api::{B2Auth, BucketResult};
+use api::{B2Auth};
 use handle_b2error_kinds;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
-struct ListBucketsBody<'a> {
-    account_id: &'a str,
+struct DeleteFileVersionBody<'a> {
+    file_name: &'a str,
+    file_id: &'a str,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct ListBucketsResult {
-    pub buckets: Vec<BucketResult>,
+pub struct DeleteFileVersionResult {
+    pub file_name: String,
+    pub file_id: String,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_list_buckets.html
-pub fn b2_list_buckets(client: &Client, auth: &B2Auth) -> Result<ListBucketsResult, Error> {
-    let req_body = serde_json::to_string(&ListBucketsBody {
-        account_id: &auth.account_id,
+/// https://www.backblaze.com/b2/docs/b2_delete_file_version.html
+pub fn b2_delete_file_version<T: AsRef<str>, Q: AsRef<str>>(client: &Client, auth: &B2Auth, file_name: T, file_id: Q) -> Result<DeleteFileVersionResult, Error> {
+    let req_body = serde_json::to_string(&DeleteFileVersionBody {
+        file_name: file_name.as_ref(),
+        file_id: file_id.as_ref(),
     }).unwrap();
 
-    let resp = match client.post(&auth.api_url_for("b2_list_buckets"))
+    let resp = match client.post(&auth.api_url_for("b2_delete_file_version"))
         .header(reqwest::header::AUTHORIZATION, &auth.authorization_token)
         .body(req_body)
         .send() {
@@ -33,7 +36,7 @@ pub fn b2_list_buckets(client: &Client, auth: &B2Auth) -> Result<ListBucketsResu
     }
 
     let response_string = resp.text().unwrap();
-    let deserialized: ListBucketsResult = match serde_json::from_str(&response_string) {
+    let deserialized: DeleteFileVersionResult = match serde_json::from_str(&response_string) {
         Ok(v) => v,
         Err(_e) => {
             eprintln!("{:?}", response_string);
