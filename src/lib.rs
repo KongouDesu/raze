@@ -13,6 +13,7 @@ extern crate sha1;
 extern crate url;
 
 pub mod api;
+pub mod util;
 
 use std::fmt;
 #[derive(Debug)]
@@ -90,12 +91,14 @@ impl fmt::Display for B2ApiError {
 mod tests {
     use Error;
     use api::*;
+    use util::*;
     use std::io::{BufReader, Read, Seek, SeekFrom};
 
     #[test]
     fn test_dev() {
         let client = reqwest::blocking::Client::new();
-        let auth = b2_authorize_account(&client, include_str!("../credentials")).unwrap();
+        //let auth = b2_authorize_account(&client, include_str!("../credentials")).unwrap();
+        let auth = authenticate_from_file(&client, "credentials").unwrap();
         println!("{:?}",auth);
         let upauth = b2_get_upload_url(&client, &auth, "d6f36e3c6239033066000e13").unwrap();
         println!("{:?}", upauth);
@@ -106,15 +109,16 @@ mod tests {
         let mut reader = BufReader::new(file);
         reader.read_to_end(&mut bytes).unwrap();
         reader.seek(SeekFrom::Start(0));
-        let file_hash = sha1::Sha1::from(&bytes).hexdigest();
 
         let param = FileParameters {
             file_name: "Cargo.toml",
             file_size: size,
             content_type: None,
-            content_sha1: Sha1Variant::Precomputed(&file_hash),
+            content_sha1: Sha1Variant::HexAtEnd,
             last_modified_millis: modf,
         };
+
+        let reader = ReadHashAtEnd::wrap(reader);
 
         let resp1 = b2_upload_file(&client, &upauth, reader, param).unwrap();
         println!("{:?}", resp1);

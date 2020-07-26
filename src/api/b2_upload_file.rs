@@ -55,7 +55,7 @@ pub fn b2_upload_file<R: 'static + Read + Send>(client: &Client, auth: &UploadAu
     headers.insert("X-Bz-Content-Sha1",hash.parse().unwrap());
     headers.insert("X-Bz-Info-src_last_modified_millis",params.last_modified_millis.into());
 
-    let body = reqwest::blocking::Body::sized(file, params.file_size);
+    let body = reqwest::blocking::Body::sized(file, file_size);
 
     let resp = match client.post(&auth.upload_url)
         .headers(headers)
