@@ -1,8 +1,10 @@
 ///! Different `Read` wrappers, for use with b2_upload_file
+///! These can be composed to combine their effects
 
 use std::io::Read;
 use sha1::Sha1;
 use std::cmp::min;
+use std::time::Duration;
 
 // When the main reader is done, we start returning from the hash
 // The 'hash_read' is used to keep track of how much we've read of the hash
@@ -58,5 +60,47 @@ impl<R: Read> Read for ReadHashAtEnd<R> {
             self.hash.update(&buf[0..read_inner]);
             Ok(read_inner)
         }
+    }
+}
+
+/// A Read that limits the bandwidth of a single stream
+/// bandwidth: maximum bytes per second
+/// Be aware that this sleeps the thread that reads from it
+/// While unlikely, if the bandwidth is low and the buffer size given to 'read()' is large, it may sleep long enough to time out a web request
+pub struct ReadThrottled<R: Read> {
+    inner: R,
+    bandwidth: f32,
+    read_last: usize,
+    timer: std::time::Instant,
+}
+
+impl<R: Read> ReadThrottled<R> {
+    pub fn wrap(reader: R, bandwidth: usize) -> Self {
+        ReadThrottled {
+            inner: reader,
+            bandwidth: bandwidth as f32,
+            read_last: 0,
+            timer: std::time::Instant::now(),
+        }
+    }
+}
+
+impl<R: Read> Read for ReadThrottled<R> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
+        // Sleep based on how long it has been since our last
+        let elapsed = self.timer.elapsed().as_secs_f32();
+        // How long should have passed
+        let expected_elapsed = (self.read_last as f32)/self.bandwidth;
+
+        let amount_read = self.inner.read(buf)?;
+        
+        if elapsed < expected_elapsed && amount_read > 0 {
+            std::thread::sleep(Duration::from_secs_f32(expected_elapsed-elapsed));
+        }
+
+        self.read_last = amount_read;
+        self.timer = std::time::Instant::now();
+
+        Ok(self.read_last)
     }
 }

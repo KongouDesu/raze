@@ -25,5 +25,5 @@ version = "0.6.0"
 features = ["std"]
 
 [dependencies.reqwest]
-version = "0.10.6"
+version = "0.10.7"
 features = ["blocking"]
