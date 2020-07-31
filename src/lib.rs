@@ -107,7 +107,7 @@ mod tests {
         let modf = file.metadata().unwrap().modified().unwrap().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()*1000;
 
         let param = FileParameters {
-            file_name: "Cargo.lock",
+            file_path: "Cargo.lock",
             file_size: size,
             content_type: None,
             content_sha1: Sha1Variant::HexAtEnd,

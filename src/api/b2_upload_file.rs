@@ -5,8 +5,9 @@ use api::{UploadAuth, B2FileInfo};
 use handle_b2error_kinds;
 use std::io::Read;
 
+#[derive(Debug)]
 pub struct FileParameters<'a> {
-    pub file_name: &'a str,
+    pub file_path: &'a str,
     pub file_size: u64,
     pub content_type: Option<&'a str>,
     pub content_sha1: Sha1Variant<'a>,
@@ -17,6 +18,7 @@ pub struct FileParameters<'a> {
 /// Precomputed requires the hash computed before you start the upload
 /// HexAtEnd expects the 'file' Reader to provide the Sha1 as 40-characters hexadecimal at the end
 /// DoNotVerify will use no hash at all. Note that this is not recommended by Backblaze
+#[derive(Debug)]
 pub enum Sha1Variant<'a> {
     Precomputed(&'a str),
     HexAtEnd,
@@ -32,7 +34,7 @@ pub fn b2_upload_file<R: 'static + Read + Send>(client: &Client, auth: &UploadAu
     // See https://www.backblaze.com/b2/docs/string_encoding.html
     // Note we need to drop the first character, as it is always an equals '=' symbol
     let encoded_file_name = &url::form_urlencoded::Serializer::new(String::new())
-        .append_pair("",params.file_name)
+        .append_pair("",params.file_path)
         .finish()[1..];
 
     let hash = match params.content_sha1 {

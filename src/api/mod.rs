@@ -26,7 +26,7 @@ pub struct BucketResult {
 
 /// API response from 'b2_upload_file' and 'b2_hide_file'
 /// 'b2_list_file_names' and 'b2_list_file_versions' returns a list of them
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct B2FileInfo {
     pub account_id: String,
@@ -38,6 +38,26 @@ pub struct B2FileInfo {
     pub file_id: Option<String>,
     pub file_name: String,
     pub upload_timestamp: u64,
+}
+
+/// Compares by the file_name value
+impl Ord for B2FileInfo {
+    fn cmp(&self, other: &B2FileInfo) -> Ordering {
+        self.file_name.cmp(&other.file_name)
+    }
+}
+
+impl PartialOrd for B2FileInfo {
+    fn partial_cmp(&self, other: &B2FileInfo) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+/// Compares by the file_name value
+impl PartialEq for B2FileInfo {
+    fn eq(&self, other: &B2FileInfo) -> bool {
+        self.file_name == other.file_name
+    }
 }
 
 // Export API calls
@@ -64,3 +84,4 @@ mod b2_delete_file_version;
 pub use self::b2_delete_file_version::*;
 mod b2_hide_file;
 pub use self::b2_hide_file::*;
+use std::cmp::Ordering;

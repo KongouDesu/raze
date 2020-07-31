@@ -18,7 +18,7 @@ pub struct ListFilesResult {
     pub next_file_name: Option<String>,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_create_bucket.html
+/// https://www.backblaze.com/b2/docs/b2_list_file_names.html
 /// Note billing behavior regarding 'max_file_count'
 pub fn b2_list_file_names<T: AsRef<str>, Q: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T, start_file_name: Q, max_file_count: u32) -> Result<ListFilesResult, Error> {
     let req_body = serde_json::to_string(&ListFileNamesBody {
