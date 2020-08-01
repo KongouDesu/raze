@@ -5,7 +5,7 @@ use api::{UploadAuth, B2FileInfo};
 use handle_b2error_kinds;
 use std::io::Read;
 
-#[derive(Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Information about a file being uploaded with [b2_upload_file](fn.b2_upload_file.html)
 ///
 /// 'file_size' **has to match the size of the upload** \
@@ -25,7 +25,7 @@ pub struct FileParameters<'a> {
 /// * Precomputed requires the hash computed before you start the upload \
 /// * HexAtEnd expects the 'file' Reader to provide the Sha1 as 40-characters hexadecimal at the end (See: [ReadHashAtEnd](../util/struct.ReadHashAtEnd.html)) \
 /// * DoNotVerify will use no hash at all. Note that this is **not recommended by Backblaze**
-#[derive(Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Sha1Variant<'a> {
     Precomputed(&'a str),
     HexAtEnd,

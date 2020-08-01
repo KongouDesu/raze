@@ -13,6 +13,7 @@ The raw API calls are more or less 1:1 with the [official B2 docs][1]
 
 If you need something that isn't implemented, open an issue or submit a pull request  
 Note that many features marked 'optional' by Backblaze are of much lower priority than implementing the rest of the API
+Disclaimer: This library is not associated with Backblaze - Be aware of the [B2 pricing](https://www.backblaze.com/b2/cloud-storage-pricing.html) - Refer to License.md for conditions
 
 Name | Status
 ---- | ------

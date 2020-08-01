@@ -4,7 +4,7 @@ use Error;
 use serde_json;
 use handle_b2error_kinds;
 
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 /// An authorization from [b2_authorize_account](fn.b2_authorize_account.html) - Required for most other calls
 ///

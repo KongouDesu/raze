@@ -9,7 +9,7 @@ struct GetUploadUrlBody<'a> {
     bucket_id: &'a str,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 /// Authorization and URL for uploading with [b2_upload_file](fn.b2_upload_file.html) - Distinct from B2Auth
 ///

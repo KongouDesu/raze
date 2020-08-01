@@ -1,7 +1,7 @@
 /// The types a bucket can have
 ///
 /// Note that 'Snapshot' cannot be created via b2_create_bucket or b2_update_bucket
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 pub enum B2BucketType {
     AllPublic,
@@ -12,7 +12,7 @@ pub enum B2BucketType {
 /// Represents a 'Bucket' on B2
 ///
 /// API response from 'b2_create_bucket', 'b2_update_bucket', 'b2_delete_bucket' and 'b2_list_buckets'
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 pub struct BucketResult {
     pub account_id: String,
@@ -24,7 +24,7 @@ pub struct BucketResult {
 /// Represents a file on B2
 ///
 /// API response from 'b2_upload_file' and 'b2_hide_file', 'b2_list_file_names' and 'b2_list_file_versions'
-#[derive(Deserialize, Serialize, Debug, Eq, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct B2FileInfo {
     pub account_id: String,

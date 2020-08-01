@@ -1,4 +1,4 @@
-//! Raze is a library for interfacing the [BackBlaze B2 API](https://www.backblaze.com/b2/docs/)
+//! Raze is a library for interfacing the [BackBlaze B2 API](https://www.backblaze.com/b2/cloud-storage.html)
 //!
 //! Raze provides raw API bindings via the [API](api/index.html) along with some useful functions via [utils](util/index.html) \
 //! It is highly recommended to familiarize yourself with the [official B2 documentation](https://www.backblaze.com/b2/docs/) before using this crate \
@@ -7,6 +7,37 @@
 //! Note that despite being blocking, the same `Client` can be shared by multiple threads for concurrent usage, and it is recommended to do so for uploading multiple files at once
 //!
 //! Disclaimer: This library is not associated with Backblaze - Be aware of the [B2 pricing](https://www.backblaze.com/b2/cloud-storage-pricing.html) - Refer to License.md for conditions
+//!
+//! ## Example:
+//! ```rust
+//! // Authenticate, upload and delete a file
+//! let client = reqwest::blocking::ClientBuilder::new().timeout(None).build().unwrap();
+//! let auth = authenticate_from_file(&client, "credentials").unwrap();
+//! let upauth = b2_get_upload_url(&client, &auth, "bucket_id").unwrap();
+//! let file = std::fs::File::open("document.txt").unwrap();
+//! let metadata = file.metadata.unwrap();
+//! let size = metadata.len();
+//! let modf = metadata.modified().unwrap()
+//!                 .duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()*1000;
+//!
+//! let param = FileParameters {
+//!     file_path: "document.txt",
+//!     file_size: size,
+//!     content_type: None,
+//!     content_sha1: Sha1Variant::HexAtEnd,
+//!     last_modified_millis: modf,
+//! };
+//!
+//! let reader = file;
+//! let reader = ReadHashAtEnd::wrap(reader);
+//! let reader = ReadThrottled::wrap(reader, 100);
+//!
+//! let resp1 = b2_upload_file(&client, &upauth, reader, param);
+//!
+//! let resp2 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
+//! ```
+
+
 
 extern crate reqwest;
 extern crate base64;
@@ -54,7 +85,7 @@ impl Error {
     fn from_response(resp: reqwest::blocking::Response) -> Error {
         match resp.text() {
             Ok(s) =>  Error::from_json(&s),
-            Err(e) => return Error::ReqwestError(e),
+            Err(e) => Error::ReqwestError(e),
         }
     }
 }
@@ -68,7 +99,7 @@ fn handle_b2error_kinds(n: &str) -> Error {
     };
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// An API error, returned by the B2 backend
 ///
 /// You typically run into this in 2 cases:
@@ -110,7 +141,7 @@ mod tests {
         let client = reqwest::blocking::ClientBuilder::new().timeout(None).build().unwrap();
         let auth = authenticate_from_file(&client, "credentials").unwrap();
         println!("{:?}",auth);
-        let upauth = b2_get_upload_url(&client, &auth, "d6f36e3c6239033066000e13").unwrap();
+        let upauth = b2_get_upload_url(&client, &auth, "").unwrap();
         println!("{:?}", upauth);
         let file = std::fs::File::open("Cargo.lock").unwrap();
         let size = file.metadata().unwrap().len();
@@ -134,8 +165,8 @@ mod tests {
         println!("Upload took {}", t.elapsed().as_secs_f32());
         let resp1 = resp1.unwrap();
 
-        let resp3 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
-        println!("{:?}", resp3);
+        let resp2 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
+        println!("{:?}", resp2);
 
     }
 }

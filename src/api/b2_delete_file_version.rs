@@ -10,7 +10,7 @@ struct DeleteFileVersionBody<'a> {
     file_id: &'a str,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 /// Result object from [b2_delete_file_version](fn.b2_delete_file_version.html)
 pub struct DeleteFileVersionResult {

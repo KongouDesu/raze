@@ -2,7 +2,6 @@ use reqwest::blocking::Client;
 use std::path::Path;
 use api::B2Auth;
 use Error;
-use std::io::Read;
 use api;
 
 /// Authenticate directly from a file containing credentials

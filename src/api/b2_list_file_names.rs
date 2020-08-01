@@ -11,7 +11,7 @@ struct ListFileNamesBody<'a> {
     max_file_count: u32,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 /// Contains up to `max_file_count` files and potentially where to continue from with [b2_list_file_names](fn.b2_list_file_names.html)
 pub struct ListFilesResult {

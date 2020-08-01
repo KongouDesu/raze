@@ -1,5 +1,5 @@
 use reqwest::blocking::Client;
-use api::{B2Auth, ListFilesResult, B2FileInfo};
+use api::{B2Auth, B2FileInfo};
 use Error;
 use api;
 
