@@ -12,12 +12,13 @@ struct DeleteFileVersionBody<'a> {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
+/// Result object from [b2_delete_file_version](fn.b2_delete_file_version.html)
 pub struct DeleteFileVersionResult {
     pub file_name: String,
     pub file_id: String,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_delete_file_version.html
+/// <https://www.backblaze.com/b2/docs/b2_delete_file_version.html>
 pub fn b2_delete_file_version<T: AsRef<str>, Q: AsRef<str>>(client: &Client, auth: &B2Auth, file_name: T, file_id: Q) -> Result<DeleteFileVersionResult, Error> {
     let req_body = serde_json::to_string(&DeleteFileVersionBody {
         file_name: file_name.as_ref(),

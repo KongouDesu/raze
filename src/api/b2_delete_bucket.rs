@@ -10,7 +10,7 @@ struct DeleteBucketBody<'a> {
     bucket_id: &'a str,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_delete_bucket.html
+/// <https://www.backblaze.com/b2/docs/b2_delete_bucket.html>
 pub fn b2_delete_bucket<T: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T) -> Result<BucketResult, Error> {
     let req_body = serde_json::to_string(&DeleteBucketBody {
         account_id: &auth.account_id,

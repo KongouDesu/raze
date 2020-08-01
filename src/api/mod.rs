@@ -1,9 +1,5 @@
-///! Raw API calls
-
-// Auth is used elsewhere, export it
-pub use self::b2_authorize_account::B2Auth;
-
 /// The types a bucket can have
+///
 /// Note that 'Snapshot' cannot be created via b2_create_bucket or b2_update_bucket
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -13,8 +9,9 @@ pub enum B2BucketType {
     Snapshot,
 }
 
-/// API response from 'b2_create_bucket', 'b2_update_bucket', and 'b2_delete_bucket'
-/// Also returned as part of an array w/ 'b2_list_buckets'
+/// Represents a 'Bucket' on B2
+///
+/// API response from 'b2_create_bucket', 'b2_update_bucket', 'b2_delete_bucket' and 'b2_list_buckets'
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct BucketResult {
@@ -24,8 +21,9 @@ pub struct BucketResult {
     pub bucket_type: B2BucketType,
 }
 
-/// API response from 'b2_upload_file' and 'b2_hide_file'
-/// 'b2_list_file_names' and 'b2_list_file_versions' returns a list of them
+/// Represents a file on B2
+///
+/// API response from 'b2_upload_file' and 'b2_hide_file', 'b2_list_file_names' and 'b2_list_file_versions'
 #[derive(Deserialize, Serialize, Debug, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct B2FileInfo {

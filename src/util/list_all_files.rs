@@ -1,12 +1,14 @@
 use reqwest::blocking::Client;
-use api::{B2Auth, ListFilesResult};
+use api::{B2Auth, ListFilesResult, B2FileInfo};
 use Error;
 use api;
 
-/// A version of b2_list_file_names that loops until all files have been retrieved
-/// Note billing behavior regarding 'max_file_count', recommended value is 1000
-/// https://www.backblaze.com/b2/docs/b2_list_file_names.html
-pub fn list_all_files<T: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T, max_file_count: u32) -> Result<ListFilesResult, Error> {
+/// List *all* files inside a given bucket by repeating [b2_list_file_names](../api/fn.b2_list_file_names.html)
+///
+/// Keeps calling the API until all files have been retrieved \
+/// Note billing behavior regarding 'max_file_count', recommended value is 1000 \
+/// <https://www.backblaze.com/b2/docs/b2_list_file_names.html>
+pub fn list_all_files<T: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T, max_file_count: u32) -> Result<Vec<B2FileInfo>, Error> {
     let mut list = match api::b2_list_file_names(&client, &auth, &bucket_id, &"", max_file_count) {
         Ok(v) => v,
         Err(e) => return Err(e),
@@ -21,5 +23,5 @@ pub fn list_all_files<T: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: 
         list.next_file_name = next_list.next_file_name;
     }
 
-    Ok(list)
+    Ok(list.files)
 }

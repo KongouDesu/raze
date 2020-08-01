@@ -13,13 +13,17 @@ struct ListFileNamesBody<'a> {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
+/// Contains up to `max_file_count` files and potentially where to continue from with [b2_list_file_names](fn.b2_list_file_names.html)
 pub struct ListFilesResult {
     pub files: Vec<B2FileInfo>,
     pub next_file_name: Option<String>,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_list_file_names.html
-/// Note billing behavior regarding 'max_file_count'
+/// <https://www.backblaze.com/b2/docs/b2_list_file_names.html>
+///
+/// Note billing behavior regarding 'max_file_count' \
+/// Leaving 'start_file_name' empty will go from the first file \
+/// May return a 'next_file_name' which can be used to continue from where the previous call ended
 pub fn b2_list_file_names<T: AsRef<str>, Q: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T, start_file_name: Q, max_file_count: u32) -> Result<ListFilesResult, Error> {
     let req_body = serde_json::to_string(&ListFileNamesBody {
         bucket_id: bucket_id.as_ref(),

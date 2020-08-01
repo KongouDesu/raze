@@ -1,8 +1,12 @@
 //! Raze is a library for interfacing the [BackBlaze B2 API](https://www.backblaze.com/b2/docs/)
 //!
-//! Raze provides raw API bindings via the [API](api/index.html) module or an easy-to-use object-like struct via [engine](engine/index.html) \
-//! It is highly recommended to thoroughly read the BackBlaze B2 API documentation before using this crate
-#![allow(dead_code)]
+//! Raze provides raw API bindings via the [API](api/index.html) along with some useful functions via [utils](util/index.html) \
+//! It is highly recommended to familiarize yourself with the [official B2 documentation](https://www.backblaze.com/b2/docs/) before using this crate \
+//!
+//! This crate exposes a **blocking** API by the use of [reqwest](https://crates.io/crates/reqwest/0.10.7) \
+//! Note that despite being blocking, the same `Client` can be shared by multiple threads for concurrent usage, and it is recommended to do so for uploading multiple files at once
+//!
+//! Disclaimer: This library is not associated with Backblaze - Be aware of the [B2 pricing](https://www.backblaze.com/b2/cloud-storage-pricing.html) - Refer to License.md for conditions
 
 extern crate reqwest;
 extern crate base64;
@@ -12,7 +16,9 @@ extern crate serde_json;
 extern crate sha1;
 extern crate url;
 
+/// Raw API bindings, mostly 1:1 with official API
 pub mod api;
+/// Various helper functions to assist with common tasks
 pub mod util;
 
 use std::fmt;
@@ -44,7 +50,7 @@ impl Error {
         Error::B2Error(deserialized)
     }
 
-    /// Same as [from_string](fn.from_json.html) but works directly on a reqwest::Response
+    /// Same as from_string but works directly on a reqwest::Response
     fn from_response(resp: reqwest::blocking::Response) -> Error {
         match resp.text() {
             Ok(s) =>  Error::from_json(&s),
@@ -64,6 +70,10 @@ fn handle_b2error_kinds(n: &str) -> Error {
 
 #[derive(Deserialize, Serialize)]
 /// An API error, returned by the B2 backend
+///
+/// You typically run into this in 2 cases:
+/// 1. The backend ran into some issue, e.g. timed out, your authorization expired etc. \
+/// 2. Wrong use of the API, e.g. malformed args, insufficient permissions
 ///
 /// Official documentation: [Error Handling](https://www.backblaze.com/b2/docs/calling.html#error_handling)
 pub struct B2ApiError {

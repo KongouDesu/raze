@@ -11,7 +11,7 @@ struct UpdateBucketBody<'a> {
     bucket_type: B2BucketType,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_update_bucket.html
+/// <https://www.backblaze.com/b2/docs/b2_update_bucket.html>
 pub fn b2_update_bucket<T: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T, bucket_type: B2BucketType) -> Result<BucketResult, Error> {
     let req_body = serde_json::to_string(&UpdateBucketBody {
         account_id: &auth.account_id,

@@ -11,15 +11,17 @@ struct GetUploadUrlBody<'a> {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
-/// Authorization and upload url
-/// Needed for b2_upload_file
+/// Authorization and URL for uploading with [b2_upload_file](fn.b2_upload_file.html) - Distinct from B2Auth
+///
+/// Note that this should **NOT** be shared - each concurrent upload needs its own UploadAuth
+/// Needed for [b2_upload_file](fn.b2_upload_file.html)
 pub struct UploadAuth {
     pub bucket_id: String,
     pub upload_url: String,
     pub authorization_token: String,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_get_upload_url.html
+/// <https://www.backblaze.com/b2/docs/b2_get_upload_url.html>
 pub fn b2_get_upload_url<T: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T) -> Result<UploadAuth, Error> {
     let req_body = serde_json::to_string(&GetUploadUrlBody {
         bucket_id: bucket_id.as_ref(),

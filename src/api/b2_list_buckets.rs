@@ -11,12 +11,12 @@ struct ListBucketsBody<'a> {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct ListBucketsResult {
+struct ListBucketsResult {
     pub buckets: Vec<BucketResult>,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_list_buckets.html
-pub fn b2_list_buckets(client: &Client, auth: &B2Auth) -> Result<ListBucketsResult, Error> {
+/// <https://www.backblaze.com/b2/docs/b2_list_buckets.html>
+pub fn b2_list_buckets(client: &Client, auth: &B2Auth) -> Result<Vec<BucketResult>, Error> {
     let req_body = serde_json::to_string(&ListBucketsBody {
         account_id: &auth.account_id,
     }).unwrap();
@@ -40,5 +40,5 @@ pub fn b2_list_buckets(client: &Client, auth: &B2Auth) -> Result<ListBucketsResu
             return Err(handle_b2error_kinds(&response_string))
         }
     };
-    Ok(deserialized)
+    Ok(deserialized.buckets)
 }

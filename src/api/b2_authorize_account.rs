@@ -6,8 +6,9 @@ use handle_b2error_kinds;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
-/// Contains the authorization response
-/// Note: 'allowed' object is currently _unsupported_
+/// An authorization from [b2_authorize_account](fn.b2_authorize_account.html) - Required for most other calls
+///
+/// Note: 'allowed' object is currently *unsupported*
 pub struct B2Auth {
     pub account_id: String,
     pub authorization_token: String,
@@ -25,8 +26,11 @@ impl B2Auth {
     }
 }
 
+/// Authenticate with the API - B2Auth is required by other commands
+///
 /// 'keystring' is a string with the format "applicationKeyId:applicationKey" (Remember the colon)
-/// https://www.backblaze.com/b2/docs/b2_authorize_account.html
+///
+/// <https://www.backblaze.com/b2/docs/b2_authorize_account.html>
 pub fn b2_authorize_account<T: AsRef<str>>(client: &Client, keystring: T) -> Result<B2Auth, Error> {
     // Encode the key
     let encoded = format!("{}{}", "Basic ", encode(keystring.as_ref()));

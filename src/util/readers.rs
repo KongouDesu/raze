@@ -6,8 +6,9 @@ use sha1::Sha1;
 use std::cmp::min;
 use std::time::Duration;
 
-// When the main reader is done, we start returning from the hash
-// The 'hash_read' is used to keep track of how much we've read of the hash
+/// Wraps a `Read`, computing the Sha1 hash along the way and returning it when the inner reader is done
+///
+/// The hash is returned as 40 hexadecimal digits
 pub struct ReadHashAtEnd<R: Read> {
     inner: R,
     hash: Sha1,
@@ -63,10 +64,10 @@ impl<R: Read> Read for ReadHashAtEnd<R> {
     }
 }
 
-/// A Read that limits the bandwidth of a single stream
-/// bandwidth: maximum bytes per second
-/// Be aware that this sleeps the thread that reads from it
-/// While unlikely, if the bandwidth is low and the buffer size given to 'read()' is large, it may sleep long enough to time out a web request
+/// Wraps a `Read`, limiting the bandwidth it can use with [b2_upload_file](../api/fn.b2_upload_file.html)
+///
+/// bandwidth: maximum bytes per second \
+/// Be aware that this sleeps the thread that reads from it \
 pub struct ReadThrottled<R: Read> {
     inner: R,
     bandwidth: f32,

@@ -6,6 +6,12 @@ use handle_b2error_kinds;
 use std::io::Read;
 
 #[derive(Debug)]
+/// Information about a file being uploaded with [b2_upload_file](fn.b2_upload_file.html)
+///
+/// 'file_size' **has to match the size of the upload** \
+/// If it doesn't, it **will** result in an error \
+/// The extra size from using hex-digits-at-end is added automatically \
+/// If 'content_type' is None, "b2/x-auto" is used as default \
 pub struct FileParameters<'a> {
     pub file_path: &'a str,
     pub file_size: u64,
@@ -14,10 +20,11 @@ pub struct FileParameters<'a> {
     pub last_modified_millis: u64,
 }
 
-/// The different types of Sha1-checksums supported
-/// Precomputed requires the hash computed before you start the upload
-/// HexAtEnd expects the 'file' Reader to provide the Sha1 as 40-characters hexadecimal at the end
-/// DoNotVerify will use no hash at all. Note that this is not recommended by Backblaze
+/// Different ways to handle Sha1-hashing for verifying file integrity
+///
+/// * Precomputed requires the hash computed before you start the upload \
+/// * HexAtEnd expects the 'file' Reader to provide the Sha1 as 40-characters hexadecimal at the end (See: [ReadHashAtEnd](../util/struct.ReadHashAtEnd.html)) \
+/// * DoNotVerify will use no hash at all. Note that this is **not recommended by Backblaze**
 #[derive(Debug)]
 pub enum Sha1Variant<'a> {
     Precomputed(&'a str),
@@ -25,9 +32,11 @@ pub enum Sha1Variant<'a> {
     DoNotVerify,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_upload_file.html
-/// If 'content_type' is None, "b2/x-auto" is used as default
-/// Be aware of Sha1-checksum behavior
+/// <https://www.backblaze.com/b2/docs/b2_upload_file.html>
+///
+/// Needs a [FileParameters](struct.FileParameters.html) containing metadata and a `Read` containing the file bytes \
+/// Be aware of Sha1-checksum behavior, see [Sha1Variant](enum.Sha1Variant.html) \
+/// Requires an [UploadAuth](struct.UploadAuth.html) instead of a B2Auth
 pub fn b2_upload_file<R: 'static + Read + Send>(client: &Client, auth: &UploadAuth, file: R, params: FileParameters) -> Result<B2FileInfo, Error> {
     let mut headers = HeaderMap::new();
     // Encode the file name

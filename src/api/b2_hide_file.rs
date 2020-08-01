@@ -10,7 +10,7 @@ struct HideFileBody<'a> {
     file_name: &'a str,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_delete_file_version.html
+/// <https://www.backblaze.com/b2/docs/b2_delete_file_version.html>
 pub fn b2_hide_file<T: AsRef<str>, Q: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T, file_name: Q) -> Result<B2FileInfo, Error> {
     let req_body = serde_json::to_string(&HideFileBody {
         bucket_id: bucket_id.as_ref(),

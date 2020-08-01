@@ -11,7 +11,7 @@ struct CreateBucketBody<'a> {
     bucket_type: B2BucketType,
 }
 
-/// https://www.backblaze.com/b2/docs/b2_create_bucket.html
+/// <https://www.backblaze.com/b2/docs/b2_create_bucket.html>
 pub fn b2_create_bucket<T: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_name: T, bucket_type: B2BucketType) -> Result<BucketResult, Error> {
     let req_body = serde_json::to_string(&CreateBucketBody {
         account_id: &auth.account_id,
