@@ -1,8 +1,8 @@
 use reqwest::blocking::Client;
 use reqwest::header::HeaderMap;
-use ::Error;
-use api::{UploadAuth, B2FileInfo};
-use handle_b2error_kinds;
+use crate::Error;
+use crate::api::{UploadAuth, B2FileInfo};
+use crate::handle_b2error_kinds;
 use std::io::Read;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]

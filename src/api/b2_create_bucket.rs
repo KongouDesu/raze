@@ -1,7 +1,7 @@
 use reqwest::blocking::Client;
-use ::Error;
-use api::{B2Auth, B2BucketType, BucketResult};
-use handle_b2error_kinds;
+use crate::Error;
+use crate::api::{B2Auth, B2BucketType, BucketResult};
+use crate::handle_b2error_kinds;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]

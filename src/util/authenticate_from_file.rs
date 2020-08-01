@@ -1,8 +1,8 @@
 use reqwest::blocking::Client;
 use std::path::Path;
-use api::B2Auth;
-use Error;
-use api;
+use crate::api::B2Auth;
+use crate::Error;
+use crate::api;
 
 /// Authenticate directly from a file containing credentials
 ///

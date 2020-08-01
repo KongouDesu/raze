@@ -10,12 +10,14 @@
 //!
 //! ## Example:
 //! ```rust
+//! # use raze::api::*;
+//! # use raze::util::*;
 //! // Authenticate, upload and delete a file
 //! let client = reqwest::blocking::ClientBuilder::new().timeout(None).build().unwrap();
 //! let auth = authenticate_from_file(&client, "credentials").unwrap();
 //! let upauth = b2_get_upload_url(&client, &auth, "bucket_id").unwrap();
 //! let file = std::fs::File::open("document.txt").unwrap();
-//! let metadata = file.metadata.unwrap();
+//! let metadata = file.metadata().unwrap();
 //! let size = metadata.len();
 //! let modf = metadata.modified().unwrap()
 //!                 .duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()*1000;
@@ -30,9 +32,9 @@
 //!
 //! let reader = file;
 //! let reader = ReadHashAtEnd::wrap(reader);
-//! let reader = ReadThrottled::wrap(reader, 100);
+//! let reader = ReadThrottled::wrap(reader, 5000);
 //!
-//! let resp1 = b2_upload_file(&client, &upauth, reader, param);
+//! let resp1 = b2_upload_file(&client, &upauth, reader, param).unwrap();
 //!
 //! let resp2 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
 //! ```
@@ -130,18 +132,15 @@ impl fmt::Display for B2ApiError {
 
 #[cfg(test)]
 mod tests {
-    use Error;
-    use api::*;
-    use util::*;
-    use std::io::{BufReader, Read, Seek, SeekFrom};
-    use std::time::Duration;
+    use crate::api::*;
+    use crate::util::*;
 
     #[test]
     fn test_dev() {
         let client = reqwest::blocking::ClientBuilder::new().timeout(None).build().unwrap();
         let auth = authenticate_from_file(&client, "credentials").unwrap();
         println!("{:?}",auth);
-        let upauth = b2_get_upload_url(&client, &auth, "").unwrap();
+        let upauth = b2_get_upload_url(&client, &auth, "bucket_id").unwrap();
         println!("{:?}", upauth);
         let file = std::fs::File::open("Cargo.lock").unwrap();
         let size = file.metadata().unwrap().len();
@@ -157,7 +156,7 @@ mod tests {
 
         let reader= file;
         let reader = ReadHashAtEnd::wrap(reader);
-        let reader = ReadThrottled::wrap(reader, 100);
+        let reader = ReadThrottled::wrap(reader, 10000);
 
         let t = std::time::Instant::now();
         let resp1 = b2_upload_file(&client, &upauth, reader, param);

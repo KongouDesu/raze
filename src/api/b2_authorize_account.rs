@@ -1,8 +1,7 @@
 use reqwest::blocking::Client;
 use base64::{encode};
-use Error;
-use serde_json;
-use handle_b2error_kinds;
+use crate::handle_b2error_kinds;
+use crate::Error;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]

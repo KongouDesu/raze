@@ -1,7 +1,7 @@
 use reqwest::blocking::Client;
-use api::{B2Auth, B2FileInfo};
-use Error;
-use api;
+use crate::api::{B2Auth, B2FileInfo};
+use crate::Error;
+use crate::api;
 
 /// List *all* files inside a given bucket by repeating [b2_list_file_names](../api/fn.b2_list_file_names.html)
 ///
