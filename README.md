@@ -1,4 +1,7 @@
 # raze
+[![Crates.io](https://img.shields.io/crates/v/raze)](https://crates.io/crates/raze)
+[![Documentation](https://docs.rs/raze/badge.svg)](https://docs.rs/raze/)
+
 Rust API bindings for the BackBlaze B2 API.
 Provides raw API calls along with some helpful utilities
 
@@ -6,7 +9,7 @@ The raw API calls are more or less 1:1 with the [official B2 docs][1]
 
    [1]: https://www.backblaze.com/b2/docs/
 
-# API implementation status
+## API implementation status
  * ✔️ - Implemented
  * 🚧 - Planned
  * ❌ - Not planned
@@ -44,4 +47,3 @@ b2_start_large_file             | ❌
 b2_update_bucket                | ✔
 b2_upload_file                  | ✔
 b2_upload_part                  | ❌
-

@@ -7,6 +7,7 @@ keywords = ["b2", "api", "backup", "backblaze"]
 categories = ["api-bindings"]
 exclude = ["credentials"]
 readme = "README.md"
+edition = "2018"
 repository = "https://github.com/KongouDesu/raze"
 license = "MIT"
 
