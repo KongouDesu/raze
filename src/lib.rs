@@ -140,7 +140,8 @@ mod tests {
         let client = reqwest::blocking::ClientBuilder::new().timeout(None).build().unwrap();
         let auth = authenticate_from_file(&client, "credentials").unwrap();
         println!("{:?}",auth);
-        let upauth = b2_get_upload_url(&client, &auth, "bucket_id").unwrap();
+        let bucket_id = include_str!("../test_bucket_id");
+        let upauth = b2_get_upload_url(&client, &auth, &bucket_id).unwrap();
         println!("{:?}", upauth);
         let file = std::fs::File::open("Cargo.lock").unwrap();
         let size = file.metadata().unwrap().len();
@@ -163,6 +164,14 @@ mod tests {
         println!("{:?}", resp1);
         println!("Upload took {}", t.elapsed().as_secs_f32());
         let resp1 = resp1.unwrap();
+
+        let param2 = B2GetDownloadAuthParams {
+            bucket_id: bucket_id.to_string(),
+            file_name_prefix: "".to_string(),
+            valid_duration_in_seconds: 500,
+        };
+        let resp3 = b2_get_download_authorization(&client, &auth, param2).unwrap();
+        println!("{:?}", resp3);
 
         let resp2 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
         println!("{:?}", resp2);

@@ -83,3 +83,6 @@ pub use self::b2_delete_file_version::*;
 mod b2_hide_file;
 pub use self::b2_hide_file::*;
 use std::cmp::Ordering;
+
+mod b2_get_download_authorization;
+pub use self::b2_get_download_authorization::*;

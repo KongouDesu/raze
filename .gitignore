@@ -2,3 +2,4 @@
 Cargo.lock
 target/
 credentials
+test_bucket_id
