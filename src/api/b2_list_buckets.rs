@@ -7,6 +7,9 @@ use crate::handle_b2error_kinds;
 #[serde(rename_all = "camelCase")]
 struct ListBucketsBody<'a> {
     account_id: &'a str,
+    bucket_id: Option<String>,
+    bucket_name: Option<String>,
+    bucket_types: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
@@ -15,10 +18,20 @@ struct ListBucketsResult {
     pub buckets: Vec<BucketResult>,
 }
 
+/// Represents the optional parameters
+pub struct ListBucketParams {
+    pub bucket_id: Option<String>,
+    pub bucket_name: Option<String>,
+    pub bucket_types: Option<String>,
+}
+
 /// <https://www.backblaze.com/b2/docs/b2_list_buckets.html>
-pub fn b2_list_buckets(client: &Client, auth: &B2Auth) -> Result<Vec<BucketResult>, Error> {
+pub fn b2_list_buckets(client: &Client, auth: &B2Auth, params: ListBucketParams) -> Result<Vec<BucketResult>, Error> {
     let req_body = serde_json::to_string(&ListBucketsBody {
         account_id: &auth.account_id,
+        bucket_id: params.bucket_id,
+        bucket_name: params.bucket_name,
+        bucket_types: params.bucket_types,
     }).unwrap();
 
     let resp = match client.post(&auth.api_url_for("b2_list_buckets"))

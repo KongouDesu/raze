@@ -3,7 +3,7 @@
 [![Documentation](https://docs.rs/raze/badge.svg)](https://docs.rs/raze/)
 
 Rust API bindings for the BackBlaze B2 API.
-Provides raw API calls along with some helpful utilities
+Provides raw API calls along with some helpful utilities.
 
 The raw API calls are more or less 1:1 with the [official B2 docs][1]
 
