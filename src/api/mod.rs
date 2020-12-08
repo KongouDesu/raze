@@ -86,3 +86,5 @@ use std::cmp::Ordering;
 
 mod b2_get_download_authorization;
 pub use self::b2_get_download_authorization::*;
+mod b2_download_file_by_name;
+pub use self::b2_download_file_by_name::*;

@@ -31,9 +31,9 @@ b2_delete_bucket                | ✔
 b2_delete_file_version          | ✔
 b2_delete_key                   | ❌
 b2_download_file_by_id          | 🚧
-b2_download_file_by_name        | 🚧
+b2_download_file_by_name        | ✔
 b2_finish_large_file            | ❌
-b2_get_download_authorization   | 🚧
+b2_get_download_authorization   | ✔
 b2_get_file_info                | 🚧
 b2_get_upload_part_url          | ❌
 b2_get_upload_url               | ✔

@@ -19,9 +19,23 @@ pub struct B2Auth {
 
 impl B2Auth {
     // Given the name of an api call, return the full url for it
-    // See https://www.backblaze.com/b2/docs/calling.html
+    // See https://www.backblaze.com/b2/docs/calling.html "Constructing the URL"
     pub fn api_url_for(&self, call_name: &str) -> String {
         format!("{}/b2api/v2/{}",self.api_url,call_name)
+    }
+
+    // Given a bucket name and a file name, returns a url for downloading the file
+    // See https://www.backblaze.com/b2/docs/calling.html "Download Files by Name"
+    // **BEWARE** This is only for use with 'b2_download_file_by_name'
+    pub fn download_url_by_name<T: AsRef<str>>(&self, bucket_name: T, file_name: T) -> String {
+        format!("{}/file/{}/{}",self.download_url,bucket_name.as_ref(),file_name.as_ref())
+    }
+
+    // Given a file id, returns a url for download the file
+    // See https://www.backblaze.com/b2/docs/calling.html "Download Files by ID"
+    // **BEWARE** This is only for use with 'b2_download_file_by_id'
+    pub fn download_url_by_id<T: AsRef<str>>(&self, file_id: T) -> String {
+        format!("{}/b2api/v2/b2_download_file_by_id?fileId={}",self.download_url,file_id.as_ref())
     }
 }
 
