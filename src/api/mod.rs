@@ -34,6 +34,7 @@ pub struct B2FileInfo {
     pub content_sha1: Option<String>,
     pub content_type: Option<String>,
     pub file_id: Option<String>,
+    pub file_info: Option<HashMap<String,String>>,
     pub file_name: String,
     pub upload_timestamp: u64,
 }
@@ -57,6 +58,7 @@ impl PartialEq for B2FileInfo {
         self.file_name == other.file_name
     }
 }
+
 
 // Export API calls
 mod b2_authorize_account;
@@ -88,3 +90,4 @@ mod b2_get_download_authorization;
 pub use self::b2_get_download_authorization::*;
 mod b2_download_file_by_name;
 pub use self::b2_download_file_by_name::*;
+use std::collections::HashMap;

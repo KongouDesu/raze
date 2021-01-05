@@ -1,6 +1,6 @@
 [package]
 name = "raze"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Kongou <kongou@shipfu.moe>"]
 description = "Rust-friendly API for for Backblaze's B2 backend - Includes raw calls and helpers"
 keywords = ["b2", "api", "backup", "backblaze"]

@@ -157,13 +157,14 @@ mod tests {
 
         let reader= file;
         let reader = ReadHashAtEnd::wrap(reader);
-        let reader = ReadThrottled::wrap(reader, 10000);
+        let reader = ReadThrottled::wrap(reader, 20000);
 
         let t = std::time::Instant::now();
         let resp1 = b2_upload_file(&client, &upauth, reader, param);
         println!("{:?}", resp1);
         println!("Upload took {}", t.elapsed().as_secs_f32());
         let resp1 = resp1.unwrap();
+        assert_eq!(resp1.file_info.unwrap().get("src_last_modified_millis").unwrap().parse::<u64>().unwrap(),modf);
 
         let param2 = B2GetDownloadAuthParams {
             bucket_id: bucket_id.to_string(),
