@@ -166,6 +166,9 @@ mod tests {
         let resp1 = resp1.unwrap();
         assert_eq!(resp1.file_info.unwrap().get("src_last_modified_millis").unwrap().parse::<u64>().unwrap(),modf);
 
+        let info = b2_get_file_info(&client, &auth, resp1.file_id.as_ref().unwrap()).unwrap();
+        assert_eq!(info.modified(), modf);
+
         let param2 = B2GetDownloadAuthParams {
             bucket_id: bucket_id.to_string(),
             file_name_prefix: "".to_string(),
