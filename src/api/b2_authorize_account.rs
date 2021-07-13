@@ -1,7 +1,7 @@
-use reqwest::blocking::Client;
-use base64::{encode};
 use crate::handle_b2error_kinds;
 use crate::Error;
+use base64::encode;
+use reqwest::blocking::Client;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
@@ -14,28 +14,37 @@ pub struct B2Auth {
     pub api_url: String,
     pub download_url: String,
     pub absolute_minimum_part_size: usize,
-    pub recommended_part_size: usize
+    pub recommended_part_size: usize,
 }
 
 impl B2Auth {
     // Given the name of an api call, return the full url for it
     // See https://www.backblaze.com/b2/docs/calling.html "Constructing the URL"
     pub fn api_url_for(&self, call_name: &str) -> String {
-        format!("{}/b2api/v2/{}",self.api_url,call_name)
+        format!("{}/b2api/v2/{}", self.api_url, call_name)
     }
 
     // Given a bucket name and a file name, returns a url for downloading the file
     // See https://www.backblaze.com/b2/docs/calling.html "Download Files by Name"
     // **BEWARE** This is only for use with 'b2_download_file_by_name'
     pub fn download_url_by_name<T: AsRef<str>>(&self, bucket_name: T, file_name: T) -> String {
-        format!("{}/file/{}/{}",self.download_url,bucket_name.as_ref(),file_name.as_ref())
+        format!(
+            "{}/file/{}/{}",
+            self.download_url,
+            bucket_name.as_ref(),
+            file_name.as_ref()
+        )
     }
 
     // Given a file id, returns a url for download the file
     // See https://www.backblaze.com/b2/docs/calling.html "Download Files by ID"
     // **BEWARE** This is only for use with 'b2_download_file_by_id'
     pub fn download_url_by_id<T: AsRef<str>>(&self, file_id: T) -> String {
-        format!("{}/b2api/v2/b2_download_file_by_id?fileId={}",self.download_url,file_id.as_ref())
+        format!(
+            "{}/b2api/v2/b2_download_file_by_id?fileId={}",
+            self.download_url,
+            file_id.as_ref()
+        )
     }
 }
 
@@ -49,15 +58,17 @@ pub fn b2_authorize_account<T: AsRef<str>>(client: &Client, keystring: T) -> Res
     let encoded = format!("{}{}", "Basic ", encode(keystring.as_ref()));
 
     // Submit the request
-    let resp = match client.get("https://api.backblazeb2.com/b2api/v2/b2_authorize_account")
+    let resp = match client
+        .get("https://api.backblazeb2.com/b2api/v2/b2_authorize_account")
         .header(reqwest::header::AUTHORIZATION, encoded)
-        .send() {
+        .send()
+    {
         Ok(v) => v,
-        Err(e) => return Err(Error::ReqwestError(e))
+        Err(e) => return Err(Error::ReqwestError(e)),
     };
     // If it didn't succeed, return ReqwestError
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp))
+        return Err(Error::from_response(resp));
     }
 
     // Read the response to a string containing the JSON response
@@ -69,9 +80,7 @@ pub fn b2_authorize_account<T: AsRef<str>>(client: &Client, keystring: T) -> Res
     // 3. API call went through, but response matches neither B2Auth nor B2Error - returns SerdeError
     let deserialized: B2Auth = match serde_json::from_str(&response_string) {
         Ok(v) => v,
-        Err(_e) => {
-            return Err(handle_b2error_kinds(&response_string))
-        }
+        Err(_e) => return Err(handle_b2error_kinds(&response_string)),
     };
     Ok(deserialized)
 }

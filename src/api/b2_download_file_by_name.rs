@@ -1,12 +1,6 @@
+use crate::api::{B2Auth, B2DownloadAuth};
+use crate::Error;
 use reqwest::blocking::{Client, Response};
-use crate::{Error, B2ApiError};
-use crate::api::{B2Auth, BucketResult, B2DownloadAuth};
-use crate::handle_b2error_kinds;
-use std::io::Write;
-use hyper::HeaderMap;
-use std::sync::{Arc, Mutex};
-use std::fs::File;
-
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -24,20 +18,26 @@ pub struct B2DownloadFileByNameParams {
 ///
 /// Due to the design of reqwest's blocking API, this will unfortunately download the entire file
 /// Furthermore, we cannot throttle the download, as no way to do so is provided
-pub fn b2_download_file_by_name(client: &Client, auth: &B2Auth, params: B2DownloadFileByNameParams) -> Result<Response, Error> {
+pub fn b2_download_file_by_name(
+    client: &Client,
+    auth: &B2Auth,
+    params: B2DownloadFileByNameParams,
+) -> Result<Response, Error> {
     let auth_token = match params.authorization {
         Some(ref a) => &a.authorization_token,
         None => &auth.authorization_token,
     };
 
-    let resp = match client.get(&auth.download_url_by_name(&params.bucket_name, &params.file_name))
+    let resp = match client
+        .get(&auth.download_url_by_name(&params.bucket_name, &params.file_name))
         .header(reqwest::header::AUTHORIZATION, auth_token)
-        .send() {
+        .send()
+    {
         Ok(v) => v,
-        Err(e) => return Err(Error::ReqwestError(e))
+        Err(e) => return Err(Error::ReqwestError(e)),
     };
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp))
+        return Err(Error::from_response(resp));
     }
 
     Ok(resp)

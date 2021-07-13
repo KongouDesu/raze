@@ -34,7 +34,7 @@ pub struct B2FileInfo {
     pub content_sha1: Option<String>,
     pub content_type: Option<String>,
     pub file_id: Option<String>,
-    pub file_info: Option<HashMap<String,String>>,
+    pub file_info: Option<HashMap<String, String>>,
     pub file_name: String,
     pub upload_timestamp: u64,
 }
@@ -71,7 +71,7 @@ impl Default for B2FileInfo {
             content_type: None,
             action: "".to_owned(),
             upload_timestamp: 0,
-            file_info: None
+            file_info: None,
         }
     }
 }
@@ -84,12 +84,11 @@ impl B2FileInfo {
             Some(fi) => match fi.get("src_last_modified_millis") {
                 Some(s) => s.parse::<u64>().unwrap_or(0),
                 None => 0,
-            }
+            },
             None => 0,
         }
     }
 }
-
 
 // Export API calls
 mod b2_authorize_account;

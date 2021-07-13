@@ -1,7 +1,7 @@
-use reqwest::blocking::Client;
-use crate::Error;
 use crate::api::{B2Auth, B2FileInfo};
 use crate::handle_b2error_kinds;
+use crate::Error;
+use reqwest::blocking::Client;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -11,21 +11,29 @@ struct HideFileBody<'a> {
 }
 
 /// <https://www.backblaze.com/b2/docs/b2_delete_file_version.html>
-pub fn b2_hide_file<T: AsRef<str>, Q: AsRef<str>>(client: &Client, auth: &B2Auth, bucket_id: T, file_name: Q) -> Result<B2FileInfo, Error> {
+pub fn b2_hide_file<T: AsRef<str>, Q: AsRef<str>>(
+    client: &Client,
+    auth: &B2Auth,
+    bucket_id: T,
+    file_name: Q,
+) -> Result<B2FileInfo, Error> {
     let req_body = serde_json::to_string(&HideFileBody {
         bucket_id: bucket_id.as_ref(),
         file_name: file_name.as_ref(),
-    }).unwrap();
+    })
+    .unwrap();
 
-    let resp = match client.post(&auth.api_url_for("b2_hide_file"))
+    let resp = match client
+        .post(&auth.api_url_for("b2_hide_file"))
         .header(reqwest::header::AUTHORIZATION, &auth.authorization_token)
         .body(req_body)
-        .send() {
+        .send()
+    {
         Ok(v) => v,
-        Err(e) => return Err(Error::ReqwestError(e))
+        Err(e) => return Err(Error::ReqwestError(e)),
     };
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp))
+        return Err(Error::from_response(resp));
     }
 
     let response_string = resp.text().unwrap();
@@ -33,7 +41,7 @@ pub fn b2_hide_file<T: AsRef<str>, Q: AsRef<str>>(client: &Client, auth: &B2Auth
         Ok(v) => v,
         Err(_e) => {
             eprintln!("{:?}", response_string);
-            return Err(handle_b2error_kinds(&response_string))
+            return Err(handle_b2error_kinds(&response_string));
         }
     };
     Ok(deserialized)

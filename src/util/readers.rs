@@ -1,9 +1,8 @@
-///! Different `Read` wrappers, for use with b2_upload_file
-///! These can be composed to combine their effects
-
-use std::io::Read;
 use sha1::Sha1;
 use std::cmp::min;
+///! Different `Read` wrappers, for use with b2_upload_file
+///! These can be composed to combine their effects
+use std::io::Read;
 use std::time::Duration;
 
 /// Wraps a `Read`, computing the Sha1 hash along the way and returning it when the inner reader is done
@@ -41,8 +40,8 @@ impl<R: Read> Read for ReadHashAtEnd<R> {
             // 2. If we've already sent part of the hash, we need to only return the remainder
             if buf_size < 40 || self.hash_read > 0 {
                 // Determine how much we can return (in case the buffer is too small)
-                let end_index = min(40, self.hash_read+buf_size);
-                let read_amount = end_index-self.hash_read;
+                let end_index = min(40, self.hash_read + buf_size);
+                let read_amount = end_index - self.hash_read;
 
                 buf[0..read_amount].clone_from_slice(&digest[self.hash_read..end_index]);
                 self.hash_read += read_amount;
@@ -89,15 +88,15 @@ impl<R: Read> ReadThrottled<R> {
 impl<R: Read> Read for ReadThrottled<R> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
         // Sleep based on how long it has been since our last
-        
+
         let elapsed = self.timer.elapsed().as_secs_f32();
         // How long should have passed
-        let expected_elapsed = (self.read_last as f32)/self.bandwidth;
+        let expected_elapsed = (self.read_last as f32) / self.bandwidth;
 
         let amount_read = self.inner.read(buf)?;
 
         if elapsed < expected_elapsed && amount_read > 0 {
-            std::thread::sleep(Duration::from_secs_f32(expected_elapsed-elapsed));
+            std::thread::sleep(Duration::from_secs_f32(expected_elapsed - elapsed));
         }
 
         self.read_last = amount_read;
