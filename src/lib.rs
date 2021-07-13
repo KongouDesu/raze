@@ -1,10 +1,9 @@
 //! Raze is a library for interfacing the [BackBlaze B2 API](https://www.backblaze.com/b2/cloud-storage.html)
 //!
-//! Raze provides raw API bindings via the [API](api/index.html) along with some useful functions via [utils](util/index.html) \
-//! It is highly recommended to familiarize yourself with the [official B2 documentation](https://www.backblaze.com/b2/docs/) before using this crate \
+//! Raze provides raw API bindings via the [API][api] along with some useful functions via [util]. \
+//! It is highly recommended to familiarize yourself with the [official B2 documentation](https://www.backblaze.com/b2/docs/) before using this crate. \
 //!
-//! This crate exposes a **blocking** API by the use of [reqwest](https://crates.io/crates/reqwest/0.10.7) \
-//! Note that despite being blocking, the same `Client` can be shared by multiple threads for concurrent usage, and it is recommended to do so for uploading multiple files at once
+//! This crate exposes an **async** API by the use of [tokio] and [reqwest].
 //!
 //! Disclaimer: This library is not associated with Backblaze - Be aware of the [B2 pricing](https://www.backblaze.com/b2/cloud-storage-pricing.html) - Refer to License.md for conditions
 //!
@@ -12,48 +11,45 @@
 //! ```rust
 //! # use raze::api::*;
 //! # use raze::util::*;
+//!
 //! // Authenticate, upload and delete a file
-//! let client = reqwest::blocking::ClientBuilder::new().timeout(None).build().unwrap();
-//! let auth = b2_authorize_account(&client, std::env::var("B2_TEST_KEY_STRING").unwrap()).unwrap();
-//! let upauth = b2_get_upload_url(&client, &auth, std::env::var("B2_TEST_BUCKET_ID").unwrap()).unwrap();
-//! let file = std::fs::File::open("test_file.txt").unwrap();
-//! let metadata = file.metadata().unwrap();
-//! let size = metadata.len();
-//! let modf = metadata.modified().unwrap()
-//!                 .duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()*1000;
+//! #[tokio::main]
+//! async fn main() {
+//!     let client = reqwest::ClientBuilder::new().build().unwrap();
+//!     let auth = b2_authorize_account(&client, std::env::var("B2_TEST_KEY_STRING").unwrap()).await.unwrap();
+//!     let upauth = b2_get_upload_url(&client, &auth, std::env::var("B2_TEST_BUCKET_ID").unwrap()).await.unwrap();
+//!     let file = tokio::fs::File::open("tests/resources/simple_text_file.txt").await.unwrap();
+//!     let metadata = file.metadata().await.unwrap();
+//!     let size = metadata.len();
+//!     let modf = metadata.modified().unwrap().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()*1000;
 //!
-//! let param = FileParameters {
-//!     file_path: "test_file.txt",
-//!     file_size: size,
-//!     content_type: None,
-//!     content_sha1: Sha1Variant::HexAtEnd,
-//!     last_modified_millis: modf,
-//! };
+//!     let param = FileParameters {
+//!         file_path: "simple_text_file.txt",
+//!         file_size: size,
+//!         content_type: None,
+//!         content_sha1: Sha1Variant::HexAtEnd,
+//!         last_modified_millis: modf,
+//!     };
 //!
-//! let reader = file;
-//! let reader = ReadHashAtEnd::wrap(reader);
-//! let reader = ReadThrottled::wrap(reader, 5000);
+//!     let reader = file;
+//!     let reader = AsyncReadHashAtEnd::wrap(reader);
+//!     let reader = AsyncReadThrottled::wrap(reader, 5000);
+//!     let body = body_from_reader(reader);
 //!
-//! let resp1 = b2_upload_file(&client, &upauth, reader, param).unwrap();
+//!     let resp1 = b2_upload_file(&client, &upauth, body, param).await.unwrap();
 //!
-//! let resp2 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
+//!     let resp2 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap()).await.unwrap();
+//! }
 //! ```
-
-extern crate base64;
-extern crate reqwest;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
-extern crate sha1;
-extern crate url;
 
 /// Raw API bindings, mostly 1:1 with official API
 pub mod api;
 /// Various helper functions to assist with common tasks
 pub mod util;
 
+use serde::{Deserialize, Serialize};
 use std::fmt;
+
 #[derive(Debug)]
 /// The various kinds of errors this crate may return
 pub enum Error {
@@ -83,8 +79,8 @@ impl Error {
     }
 
     /// Same as from_string but works directly on a reqwest::Response
-    fn from_response(resp: reqwest::blocking::Response) -> Error {
-        match resp.text() {
+    async fn from_response(resp: reqwest::Response) -> Error {
+        match resp.text().await {
             Ok(s) => Error::from_json(&s),
             Err(e) => Error::ReqwestError(e),
         }
@@ -134,79 +130,5 @@ impl fmt::Display for B2ApiError {
             "A B2 API Error occurred. Error code {} - {}. Error message: {}",
             self.status, self.code, self.message
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::api::*;
-    use crate::util::*;
-
-    #[test]
-    fn test_dev() {
-        let client = reqwest::blocking::ClientBuilder::new()
-            .timeout(None)
-            .build()
-            .unwrap();
-        let auth =
-            b2_authorize_account(&client, std::env::var("B2_TEST_KEY_STRING").unwrap()).unwrap();
-        println!("{:?}", auth);
-        let bucket_id = std::env::var("B2_TEST_BUCKET_ID").unwrap();
-        let upauth = b2_get_upload_url(&client, &auth, &bucket_id).unwrap();
-        println!("{:?}", upauth);
-        let file = std::fs::File::open("test_file.txt").unwrap();
-        let size = file.metadata().unwrap().len();
-        let modf = file
-            .metadata()
-            .unwrap()
-            .modified()
-            .unwrap()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs()
-            * 1000;
-
-        let param = FileParameters {
-            file_path: "test_file.txt",
-            file_size: size,
-            content_type: None,
-            content_sha1: Sha1Variant::HexAtEnd,
-            last_modified_millis: modf,
-        };
-
-        let reader = file;
-        let reader = ReadHashAtEnd::wrap(reader);
-        let reader = ReadThrottled::wrap(reader, 20000);
-
-        let t = std::time::Instant::now();
-        let resp1 = b2_upload_file(&client, &upauth, reader, param);
-        println!("{:?}", resp1);
-        println!("Upload took {}", t.elapsed().as_secs_f32());
-        let resp1 = resp1.unwrap();
-        assert_eq!(
-            resp1
-                .file_info
-                .unwrap()
-                .get("src_last_modified_millis")
-                .unwrap()
-                .parse::<u64>()
-                .unwrap(),
-            modf
-        );
-
-        let info = b2_get_file_info(&client, &auth, resp1.file_id.as_ref().unwrap()).unwrap();
-        assert_eq!(info.modified(), modf);
-
-        let param2 = B2GetDownloadAuthParams {
-            bucket_id: bucket_id.to_string(),
-            file_name_prefix: "".to_string(),
-            valid_duration_in_seconds: 500,
-        };
-        let resp3 = b2_get_download_authorization(&client, &auth, param2).unwrap();
-        println!("{:?}", resp3);
-
-        let resp2 =
-            b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap());
-        println!("{:?}", resp2);
     }
 }

@@ -1,7 +1,8 @@
 use crate::api::{B2Auth, B2FileInfo};
 use crate::handle_b2error_kinds;
 use crate::Error;
-use reqwest::blocking::Client;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -13,7 +14,7 @@ struct ListFileNamesBody<'a> {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
-/// Contains up to `max_file_count` files and potentially where to continue from with [b2_list_file_names](fn.b2_list_file_names.html)
+/// Contains up to `max_file_count` files and potentially where to continue from with [b2_list_file_names]
 pub struct ListFilesResult {
     pub files: Vec<B2FileInfo>,
     pub next_file_name: Option<String>,
@@ -24,7 +25,7 @@ pub struct ListFilesResult {
 /// Note billing behavior regarding 'max_file_count' \
 /// Leaving 'start_file_name' empty will go from the first file \
 /// May return a 'next_file_name' which can be used to continue from where the previous call ended
-pub fn b2_list_file_names<T: AsRef<str>, Q: AsRef<str>>(
+pub async fn b2_list_file_names<T: AsRef<str>, Q: AsRef<str>>(
     client: &Client,
     auth: &B2Auth,
     bucket_id: T,
@@ -43,15 +44,16 @@ pub fn b2_list_file_names<T: AsRef<str>, Q: AsRef<str>>(
         .header(reqwest::header::AUTHORIZATION, &auth.authorization_token)
         .body(req_body)
         .send()
+        .await
     {
         Ok(v) => v,
         Err(e) => return Err(Error::ReqwestError(e)),
     };
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp));
+        return Err(Error::from_response(resp).await);
     }
 
-    let response_string = resp.text().unwrap();
+    let response_string = resp.text().await.unwrap();
     let deserialized: ListFilesResult = match serde_json::from_str(&response_string) {
         Ok(v) => v,
         Err(_e) => {

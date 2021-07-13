@@ -1,6 +1,8 @@
 /// The types a bucket can have
 ///
-/// Note that 'Snapshot' cannot be created via b2_create_bucket or b2_update_bucket
+/// Note that 'Snapshot' cannot be created via b2_create_bucket or b2_update_bucketuse serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
+
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 pub enum B2BucketType {
@@ -56,23 +58,6 @@ impl PartialOrd for B2FileInfo {
 impl PartialEq for B2FileInfo {
     fn eq(&self, other: &B2FileInfo) -> bool {
         self.file_name == other.file_name
-    }
-}
-
-impl Default for B2FileInfo {
-    fn default() -> Self {
-        Self {
-            file_name: "".to_string(),
-            file_id: None,
-            account_id: "".to_string(),
-            bucket_id: "".to_string(),
-            content_length: 0,
-            content_sha1: None,
-            content_type: None,
-            action: "".to_owned(),
-            upload_timestamp: 0,
-            file_info: None,
-        }
     }
 }
 

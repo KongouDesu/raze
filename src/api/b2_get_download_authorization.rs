@@ -1,10 +1,12 @@
 use crate::api::B2Auth;
 use crate::handle_b2error_kinds;
 use crate::Error;
-use reqwest::blocking::Client;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 
 /// Authorization used to download files from a bucket
-/// Required by b2_download_file_by_name and b2_download_file_by_id
+/// Required by b2_download_file_by_name and b2_download_file_by_iduse serde::{Deserialize, Serialize};
+
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct B2DownloadAuth {
@@ -26,7 +28,7 @@ pub struct B2GetDownloadAuthParams {
 }
 
 /// <https://www.backblaze.com/b2/docs/b2_get_download_authorization.html>
-pub fn b2_get_download_authorization(
+pub async fn b2_get_download_authorization(
     client: &Client,
     auth: &B2Auth,
     params: B2GetDownloadAuthParams,
@@ -38,15 +40,16 @@ pub fn b2_get_download_authorization(
         .header(reqwest::header::AUTHORIZATION, &auth.authorization_token)
         .body(req_body)
         .send()
+        .await
     {
         Ok(v) => v,
         Err(e) => return Err(Error::ReqwestError(e)),
     };
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp));
+        return Err(Error::from_response(resp).await);
     }
 
-    let response_string = resp.text().unwrap();
+    let response_string = resp.text().await.unwrap();
     let deserialized: B2DownloadAuth = match serde_json::from_str(&response_string) {
         Ok(v) => v,
         Err(_e) => {

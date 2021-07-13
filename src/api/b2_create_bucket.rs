@@ -1,7 +1,8 @@
 use crate::api::{B2Auth, B2BucketType, BucketResult};
 use crate::handle_b2error_kinds;
 use crate::Error;
-use reqwest::blocking::Client;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -12,7 +13,7 @@ struct CreateBucketBody<'a> {
 }
 
 /// <https://www.backblaze.com/b2/docs/b2_create_bucket.html>
-pub fn b2_create_bucket<T: AsRef<str>>(
+pub async fn b2_create_bucket<T: AsRef<str>>(
     client: &Client,
     auth: &B2Auth,
     bucket_name: T,
@@ -30,15 +31,16 @@ pub fn b2_create_bucket<T: AsRef<str>>(
         .header(reqwest::header::AUTHORIZATION, &auth.authorization_token)
         .body(req_body)
         .send()
+        .await
     {
         Ok(v) => v,
         Err(e) => return Err(Error::ReqwestError(e)),
     };
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp));
+        return Err(Error::from_response(resp).await);
     }
 
-    let response_string = resp.text().unwrap();
+    let response_string = resp.text().await.unwrap();
     let deserialized: BucketResult = match serde_json::from_str(&response_string) {
         Ok(v) => v,
         Err(_e) => {

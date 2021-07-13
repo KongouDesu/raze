@@ -1,8 +1,9 @@
-use reqwest::blocking::Client;
+use reqwest::Client;
 
 use crate::api::{B2Auth, B2FileInfo};
 use crate::handle_b2error_kinds;
 use crate::Error;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -16,7 +17,7 @@ struct GetFileInfoBody<'a> {
 /// Note that b2_list_file_names already returns the file info, so if you use that, there is no need to call this
 ///
 /// <https://www.backblaze.com/b2/docs/b2_get_file_info.html>
-pub fn b2_get_file_info<T: AsRef<str>>(
+pub async fn b2_get_file_info<T: AsRef<str>>(
     client: &Client,
     auth: &B2Auth,
     file_id: T,
@@ -31,15 +32,16 @@ pub fn b2_get_file_info<T: AsRef<str>>(
         .header(reqwest::header::AUTHORIZATION, &auth.authorization_token)
         .body(req_body)
         .send()
+        .await
     {
         Ok(v) => v,
         Err(e) => return Err(Error::ReqwestError(e)),
     };
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp));
+        return Err(Error::from_response(resp).await);
     }
 
-    let response_string = resp.text().unwrap();
+    let response_string = resp.text().await.unwrap();
     let deserialized: B2FileInfo = match serde_json::from_str(&response_string) {
         Ok(v) => v,
         Err(_e) => {

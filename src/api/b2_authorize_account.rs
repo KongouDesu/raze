@@ -1,11 +1,12 @@
 use crate::handle_b2error_kinds;
 use crate::Error;
 use base64::encode;
-use reqwest::blocking::Client;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
-/// An authorization from [b2_authorize_account](fn.b2_authorize_account.html) - Required for most other calls
+/// An authorization from [b2_authorize_account] - Required for most other calls
 ///
 /// Note: 'allowed' object is currently *unsupported*
 pub struct B2Auth {
@@ -53,7 +54,10 @@ impl B2Auth {
 /// 'keystring' is a string with the format "applicationKeyId:applicationKey" (Remember the colon)
 ///
 /// <https://www.backblaze.com/b2/docs/b2_authorize_account.html>
-pub fn b2_authorize_account<T: AsRef<str>>(client: &Client, keystring: T) -> Result<B2Auth, Error> {
+pub async fn b2_authorize_account<T: AsRef<str>>(
+    client: &Client,
+    keystring: T,
+) -> Result<B2Auth, Error> {
     // Encode the key
     let encoded = format!("{}{}", "Basic ", encode(keystring.as_ref()));
 
@@ -62,17 +66,18 @@ pub fn b2_authorize_account<T: AsRef<str>>(client: &Client, keystring: T) -> Res
         .get("https://api.backblazeb2.com/b2api/v2/b2_authorize_account")
         .header(reqwest::header::AUTHORIZATION, encoded)
         .send()
+        .await
     {
         Ok(v) => v,
         Err(e) => return Err(Error::ReqwestError(e)),
     };
     // If it didn't succeed, return ReqwestError
     if !resp.status().is_success() {
-        return Err(Error::from_response(resp));
+        return Err(Error::from_response(resp).await);
     }
 
     // Read the response to a string containing the JSON response
-    let response_string = resp.text().unwrap();
+    let response_string = resp.text().await.unwrap();
     // Attempt to deserialize the JSON
     // There are 3 cases here
     // 1. API call succeeded and it deserializes to a B2Auth struct
