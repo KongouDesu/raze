@@ -127,15 +127,6 @@ pub fn body_from_reader<R: AsyncRead + Send + Sync + 'static>(file: R) -> reqwes
     reqwest::Body::wrap_stream(stream)
 }
 
-pub fn body_from_stream<S>(stream: S) -> reqwest::Body
-where
-    S: futures::stream::TryStream + Send + Sync + 'static,
-    S::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
-    bytes::Bytes: From<S::Ok>,
-{
-    reqwest::Body::wrap_stream(stream)
-}
-
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
