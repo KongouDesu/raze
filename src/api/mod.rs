@@ -1,6 +1,8 @@
 /// The types a bucket can have
 ///
-/// Note that 'Snapshot' cannot be created via b2_create_bucket or b2_update_bucket
+/// Note that 'Snapshot' cannot be created via b2_create_bucket or b2_update_bucketuse serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
+
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase")]
 pub enum B2BucketType {
@@ -34,7 +36,7 @@ pub struct B2FileInfo {
     pub content_sha1: Option<String>,
     pub content_type: Option<String>,
     pub file_id: Option<String>,
-    pub file_info: Option<HashMap<String,String>>,
+    pub file_info: Option<HashMap<String, String>>,
     pub file_name: String,
     pub upload_timestamp: u64,
 }
@@ -59,23 +61,6 @@ impl PartialEq for B2FileInfo {
     }
 }
 
-impl Default for B2FileInfo {
-    fn default() -> Self {
-        Self {
-            file_name: "".to_string(),
-            file_id: None,
-            account_id: "".to_string(),
-            bucket_id: "".to_string(),
-            content_length: 0,
-            content_sha1: None,
-            content_type: None,
-            action: "".to_owned(),
-            upload_timestamp: 0,
-            file_info: None
-        }
-    }
-}
-
 impl B2FileInfo {
     /// Returns the modified timestamp of the file
     /// If it wasn't supplied during upload, this will return 0
@@ -84,12 +69,11 @@ impl B2FileInfo {
             Some(fi) => match fi.get("src_last_modified_millis") {
                 Some(s) => s.parse::<u64>().unwrap_or(0),
                 None => 0,
-            }
+            },
             None => 0,
         }
     }
 }
-
 
 // Export API calls
 mod b2_authorize_account;
