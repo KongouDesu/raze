@@ -155,7 +155,7 @@ mod tests {
     async fn test_thrrottled_read() {
         // Test reading 512 bytes at a bandwidth of 256 bytes / sec. Should complete in around 2 secs.
         use tokio::io::AsyncReadExt;
-        let file = tokio::fs::File::open("/dev/urandom").await.unwrap();
+        let file = tokio::fs::File::open("tests/resources/512bytes.txt").await.unwrap();
         let mut read = AsyncReadThrottled::wrap(file, 256);
         let mut buf: Vec<u8> = vec![0; 512];
         let start = Instant::now();
