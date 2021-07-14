@@ -45,7 +45,8 @@
 /// Raw API bindings, mostly 1:1 with official API
 pub mod api;
 /// Various helper functions to assist with common tasks
-pub mod util;
+#[cfg(feature = "utils")]
+pub mod utils;
 
 use serde::{Deserialize, Serialize};
 use std::fmt;

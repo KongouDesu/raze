@@ -138,6 +138,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
 
     #[tokio::test]
@@ -164,9 +166,9 @@ mod tests {
     async fn test_thrrottled_read() {
         // Test reading 512 bytes at a bandwidth of 256 bytes / sec. Should complete in around 2 secs.
         use tokio::io::AsyncReadExt;
-        let file = tokio::fs::File::open("tests/resources/512bytes.txt")
-            .await
-            .unwrap();
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/resources/512bytes.txt");
+        let file = tokio::fs::File::open(&path).await.unwrap();
         let mut read = AsyncReadThrottled::wrap(file, 256);
         let mut buf: Vec<u8> = vec![0; 512];
         let start = Instant::now();

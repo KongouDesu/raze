@@ -1,5 +1,5 @@
 use raze::api::*;
-use raze::util::*;
+use raze::utils::*;
 mod common;
 use common::*;
 
