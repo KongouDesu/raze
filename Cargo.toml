@@ -31,6 +31,7 @@ bytes = { version = "1.0", optional = true }
 tokio = { version = "1", features = ["fs", "macros", "parking_lot", "rt-multi-thread"] }
 
 [features]
-utils = ["sha1", "tokio", "tokio-util", "pin-project", "futures", "bytes", "reqwest/stream"]
+utils = ["futures"]
+util_readers = ["sha1", "tokio", "tokio-util", "pin-project", "bytes", "reqwest/stream"]
 
-default = ["utils"]
+default = ["utils", "util_readers"]
