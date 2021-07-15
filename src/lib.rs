@@ -31,11 +31,11 @@
 //!         last_modified_millis: modf,
 //!     };
 //!
-//!     let reader = file;
-//!     let reader = AsyncReadHashAtEnd::wrap(reader);
-//!     let reader = AsyncReadThrottled::wrap(reader, 5000);
-//!     let body = body_from_reader(reader);
-//!
+//!     let stream = reader_to_stream(file);
+//!     let stream = BytesStreamHashAtEnd::wrap(stream);
+//!     let stream = BytesStreamThrottled::wrap(stream, 5000);
+//!     
+//!     let body = reqwest::Body::wrap_stream(stream);
 //!     let resp1 = b2_upload_file(&client, &upauth, body, param).await.unwrap();
 //!
 //!     let resp2 = b2_delete_file_version(&client, &auth, &resp1.file_name, &resp1.file_id.unwrap()).await.unwrap();

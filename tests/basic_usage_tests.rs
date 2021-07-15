@@ -33,10 +33,11 @@ async fn test_basic_usage() {
     };
 
     let reader = file;
-    let reader = AsyncReadHashAtEnd::wrap(reader);
-    let reader = AsyncReadThrottled::wrap(reader, 20000);
+    let reader = reader_to_stream(reader);
+    let reader = BytesStreamHashAtEnd::wrap(reader);
+    let reader = BytesStreamThrottled::wrap(reader, 20000);
 
-    let resp1 = b2_upload_file(&client, &upauth, body_from_reader(reader), param).await;
+    let resp1 = b2_upload_file(&client, &upauth, reqwest::Body::wrap_stream(reader), param).await;
 
     let resp1 = resp1.unwrap();
     assert_eq!(
